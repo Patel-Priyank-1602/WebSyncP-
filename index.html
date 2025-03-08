@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Manager</title>
+    <link rel="shortcut icon" href="fav.png" type="png">
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #6c5ce7;
+            --accent-hover: #8275e8;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--bg-tertiary);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #565454;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: var(--bg-tertiary);
+            border: none;
+            border-radius: 25px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .search-container input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .search-container i {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .google-search-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .google-search-container input {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: var(--bg-tertiary);
+            border: none;
+            border-radius: 25px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .google-search-container input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .google-search-container i {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        main {
+            margin: 20px 0;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .category {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .category-actions button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .category-actions button:hover {
+            color: var(--accent);
+        }
+
+        .websites {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .website {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: var(--bg-tertiary);
+            transition: var(--transition);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .website:hover {
+            background-color: var(--bg-primary);
+        }
+
+        .website-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .website-icon img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        .website-icon i {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .website-link {
+            flex-grow: 1;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .website-link:hover {
+            color: var(--accent);
+        }
+
+        .website-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .website:hover .website-actions {
+            opacity: 1;
+        }
+
+        .website-actions button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .website-actions button:hover {
+            color: var(--danger);
+        }
+
+        .add-website {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: transparent;
+            border: 1px dashed var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .add-website:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .add-website i {
+            margin-right: 8px;
+        }
+
+        .add-category {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            height: 100%;
+            min-height: 200px;
+        }
+
+        .add-category:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .add-category i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 24px;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--bg-tertiary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-primary);
+        }
+
+        .tooltip {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--accent);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 0 10px 0 10px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: translateY(-100%) translateX(100%);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .category:hover .tooltip {
+            transform: translateY(0) translateX(0);
+            opacity: 1;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+            display: none;
+        }
+
+        .notification.success {
+            background-color: var(--success);
+        }
+
+        .notification.error {
+            background-color: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .category {
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .categories {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .website {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+
+            .search-container,
+            .google-search-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="notification" class="notification"></div>
+    <header>
+        <div class="logo">WebSync</div>
+        <div class="google-search-container">
+            <form id="googleSearchForm" action="https://www.google.com/search" method="get" target="_blank">
+                <input type="text" id="googleSearchInput" name="q" placeholder="Google Search...">
+                <i class="fab fa-google"></i>
+            </form>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search websites...">
+            <i class="fas fa-search"></i>
+        </div>
+    </header>
+
+    <main>
+        <div class="categories" id="categories"></div>
+    </main>
+
+    <div class="modal" id="addWebsiteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Website</h3>
+                <button class="modal-close" id="closeAddWebsiteModal">×</button>
+            </div>
+            <form id="addWebsiteForm">
+                <div class="form-group">
+                    <label for="websiteName">Website Name</label>
+                    <input type="text" id="websiteName" required>
+                </div>
+                <div class="form-group">
+                    <label for="websiteUrl">Website URL</label>
+                    <input type="url" id="websiteUrl" required placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="websiteCategory">Category</label>
+                    <select id="websiteCategory" required></select>
+                </div>
+                <input type="hidden" id="currentCategoryId">
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelAddWebsite">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Website</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Category</h3>
+                <button class="modal-close" id="closeAddCategoryModal">×</button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Category Name</label>
+                    <input type="text" id="categoryName" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelAddCategory">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let categories = [
+            {
+                id: 'social-media',
+                name: 'Social Media',
+                websites: [
+                    { id: 'social-1', name: 'Twitter', url: 'https://twitter.com' },
+                    { id: 'social-2', name: 'Instagram', url: 'https://instagram.com' },
+                    { id: 'social-3', name: 'Facebook', url: 'https://facebook.com' },
+                    { id: 'social-4', name: 'LinkedIn', url: 'https://linkedin.com' }
+                ]
+            },
+            {
+                id: 'ai-tools',
+                name: 'AI Tools',
+                websites: [
+                    { id: 'ai-1', name: 'ChatGPT', url: 'https://chat.openai.com' },
+                    { id: 'ai-2', name: 'Claude', url: 'https://claude.ai' },
+                    { id: 'ai-3', name: 'Midjourney', url: 'https://midjourney.com' },
+                    { id: 'ai-4', name: 'Hugging Face', url: 'https://huggingface.co' }
+                ]
+            },
+            {
+                id: 'movies',
+                name: 'Movies',
+                websites: [
+                    { id: 'movie-1', name: 'Netflix', url: 'https://netflix.com' },
+                    { id: 'movie-2', name: 'Amazon Prime', url: 'https://primevideo.com' },
+                    { id: 'movie-3', name: 'Disney+', url: 'https://disneyplus.com' },
+                    { id: 'movie-4', name: 'HBO Max', url: 'https://hbomax.com' }
+                ]
+            },
+            {
+                id: 'mail',
+                name: 'Mail',
+                websites: [
+                    { id: 'mail-1', name: 'Gmail', url: 'https://mail.google.com' },
+                    { id: 'mail-2', name: 'Outlook', url: 'https://outlook.com' },
+                    { id: 'mail-3', name: 'ProtonMail', url: 'https://proton.me' },
+                    { id: 'mail-4', name: 'Yahoo Mail', url: 'https://mail.yahoo.com' }
+                ]
+            },
+            {
+                id: 'drive',
+                name: 'Cloud Storage',
+                websites: [
+                    { id: 'drive-1', name: 'Google Drive', url: 'https://drive.google.com' },
+                    { id: 'drive-2', name: 'Dropbox', url: 'https://dropbox.com' },
+                    { id: 'drive-3', name: 'OneDrive', url: 'https://onedrive.live.com' },
+                    { id: 'drive-4', name: 'iCloud', url: 'https://icloud.com' }
+                ]
+            },
+            {
+                id: 'others',
+                name: 'Others',
+                websites: [
+                    { id: 'other-1', name: 'YouTube', url: 'https://youtube.com' },
+                    { id: 'other-2', name: 'GitHub', url: 'https://github.com' },
+                    { id: 'other-3', name: 'Reddit', url: 'https://reddit.com' },
+                    { id: 'other-4', name: 'Wikipedia', url: 'https://wikipedia.org' }
+                ]
+            }
+        ];
+
+        const categoriesContainer = document.getElementById('categories');
+        const searchInput = document.getElementById('searchInput');
+        const addWebsiteModal = document.getElementById('addWebsiteModal');
+        const addCategoryModal = document.getElementById('addCategoryModal');
+        const notification = document.getElementById('notification');
+        const closeAddWebsiteModal = document.getElementById('closeAddWebsiteModal');
+        const closeAddCategoryModal = document.getElementById('closeAddCategoryModal');
+        const addWebsiteForm = document.getElementById('addWebsiteForm');
+        const addCategoryForm = document.getElementById('addCategoryForm');
+        const websiteCategorySelect = document.getElementById('websiteCategory');
+        const currentCategoryIdInput = document.getElementById('currentCategoryId');
+        const cancelAddWebsite = document.getElementById('cancelAddWebsite');
+        const cancelAddCategory = document.getElementById('cancelAddCategory');
+        const googleSearchForm = document.getElementById('googleSearchForm');
+
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function initializeData() {
+            const storedData = localStorage.getItem('webHubData');
+            if (storedData) {
+                categories = JSON.parse(storedData);
+            }
+            renderCategories();
+            populateCategorySelect();
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('webHubData', JSON.stringify(categories));
+            } catch (error) {
+                showNotification('Failed to save data', 'error');
+                console.error('Save error:', error);
+            }
+        }
+
+        function getFaviconUrl(url) {
+            try {
+                const domain = new URL(url).hostname;
+                return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function renderCategories() {
+            categoriesContainer.innerHTML = '';
+            categories.forEach(category => {
+                const delayFactor = categories.indexOf(category) * 0.1;
+                renderCategory(category, delayFactor);
+            });
+            const addCategoryElement = document.createElement('div');
+            addCategoryElement.className = 'add-category';
+            addCategoryElement.style.animationDelay = `${(categories.length + 1) * 0.1}s`;
+            addCategoryElement.innerHTML = `
+                <i class="fas fa-plus"></i>
+                <span>Add New Category</span>
+            `;
+            addCategoryElement.addEventListener('click', () => openAddCategoryModal());
+            categoriesContainer.appendChild(addCategoryElement);
+        }
+
+        function renderCategory(category, delayFactor = 0) {
+            const categoryElement = document.createElement('div');
+            categoryElement.className = 'category';
+            categoryElement.dataset.id = category.id;
+            categoryElement.style.animationDelay = `${delayFactor}s`;
+
+            categoryElement.innerHTML = `
+                <div class="tooltip">${category.websites.length} websites</div>
+                <div class="category-header">
+                    <h3 class="category-title">${category.name}</h3>
+                    <div class="category-actions">
+                        <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+                        <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
+                        <button class="edit-category" title="Edit Category"><i class="fas fa-edit"></i></button>
+                        <button class="delete-category" title="Delete Category"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="websites" data-category-id="${category.id}">
+                    ${renderWebsites(category.websites, category.id)}
+                </div>
+                <div class="add-website" data-category="${category.id}">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Website</span>
+                </div>
+            `;
+
+            categoriesContainer.appendChild(categoryElement);
+        }
+
+        function renderWebsites(websites, categoryId) {
+            if (websites.length === 0) {
+                return '<div class="no-websites">No websites added yet</div>';
+            }
+
+            return websites.map((website, index) => {
+                const faviconUrl = getFaviconUrl(website.url);
+                const iconContent = faviconUrl ?
+                    `<img src="${faviconUrl}" alt="${website.name}" onerror="this.onerror=null; this.parentNode.innerHTML='<i class=\'fas fa-globe\'></i>';">` :
+                    `<i class="fas fa-globe"></i>`;
+
+                return `
+                <div class="website" data-id="${website.id}" data-category="${categoryId}" style="animation-delay: ${index * 0.05}s">
+                    <div class="website-icon">
+                        ${iconContent}
+                    </div>
+                    <a href="${website.url}" class="website-link" target="_blank" title="${website.url}">
+                        ${website.name}
+                    </a>
+                    <div class="website-actions">
+                        <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+                        <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
+                        <button class="edit-website" title="Edit Website"><i class="fas fa-edit"></i></button>
+                        <button class="delete-website" title="Delete Website"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function populateCategorySelect() {
+            websiteCategorySelect.innerHTML = '';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                websiteCategorySelect.appendChild(option);
+            });
+        }
+
+        function openAddWebsiteModal(categoryId = null) {
+            if (categoryId) {
+                currentCategoryIdInput.value = categoryId;
+                websiteCategorySelect.value = categoryId;
+            } else {
+                currentCategoryIdInput.value = '';
+            }
+            addWebsiteForm.reset();
+            addWebsiteModal.classList.add('active');
+        }
+
+        function openAddCategoryModal() {
+            addCategoryForm.reset();
+            addCategoryModal.classList.add('active');
+        }
+
+        function closeModals() {
+            addWebsiteModal.classList.remove('active');
+            addCategoryModal.classList.remove('active');
+        }
+
+        function addWebsite(name, url, categoryId) {
+            try {
+                const category = categories.find(cat => cat.id === categoryId);
+                if (!category) throw new Error('Category not found');
+
+                if (!name || !url) throw new Error('Name and URL are required');
+
+                const newWebsite = {
+                    id: `website-${Date.now()}`,
+                    name: name.trim(),
+                    url: url.startsWith('http') ? url : `https://${url}`
+                };
+
+                category.websites.push(newWebsite);
+                saveData();
+                renderCategories();
+                showNotification('Website added successfully');
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        function deleteWebsite(categoryId, websiteId) {
+            if (confirm('Are you sure you want to delete this website?')) {
+                try {
+                    const category = categories.find(cat => cat.id === categoryId);
+                    if (!category) throw new Error('Category not found');
+
+                    category.websites = category.websites.filter(website => website.id !== websiteId);
+                    saveData();
+                    renderCategories();
+                    showNotification('Website deleted successfully');
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            }
+        }
+
+        function addCategory(name) {
+            try {
+                if (!name) throw new Error('Category name is required');
+                if (categories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+                    throw new Error('Category already exists');
+                }
+
+                const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                const newCategory = {
+                    id: `${id}-${Date.now()}`,
+                    name: name.trim(),
+                    websites: []
+                };
+
+                categories.push(newCategory);
+                saveData();
+                renderCategories();
+                populateCategorySelect();
+                showNotification('Category added successfully');
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        function deleteCategory(categoryId) {
+            if (confirm('Are you sure you want to delete this category and all its websites?')) {
+                try {
+                    categories = categories.filter(category => category.id !== categoryId);
+                    saveData();
+                    renderCategories();
+                    populateCategorySelect();
+                    showNotification('Category deleted successfully');
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            }
+        }
+
+        function moveCategoryUp(categoryId) {
+            try {
+                const index = categories.findIndex(cat => cat.id === categoryId);
+                if (index <= 0) return;
+
+                [categories[index - 1], categories[index]] = [categories[index], categories[index - 1]];
+                saveData();
+                renderCategories();
+                showNotification('Category moved up');
+            } catch (error) {
+                showNotification('Failed to move category', 'error');
+            }
+        }
+
+        function moveCategoryDown(categoryId) {
+            try {
+                const index = categories.findIndex(cat => cat.id === categoryId);
+                if (index === -1 || index >= categories.length - 1) return;
+
+                [categories[index], categories[index + 1]] = [categories[index + 1], categories[index]];
+                saveData();
+                renderCategories();
+                showNotification('Category moved down');
+            } catch (error) {
+                showNotification('Failed to move category', 'error');
+            }
+        }
+
+        function moveWebsiteUp(categoryId, websiteId) {
+            try {
+                const category = categories.find(cat => cat.id === categoryId);
+                if (!category) throw new Error('Category not found');
+
+                const index = category.websites.findIndex(website => website.id === websiteId);
+                if (index <= 0) return;
+
+                [category.websites[index - 1], category.websites[index]] =
+                    [category.websites[index], category.websites[index - 1]];
+                saveData();
+                renderCategories();
+            } catch (error) {
+                showNotification('Failed to move website', 'error');
+            }
+        }
+
+        function moveWebsiteDown(categoryId, websiteId) {
+            try {
+                const category = categories.find(cat => cat.id === categoryId);
+                if (!category) throw new Error('Category not found');
+
+                const index = category.websites.findIndex(website => website.id === websiteId);
+                if (index === -1 || index >= category.websites.length - 1) return;
+
+                [category.websites[index], category.websites[index + 1]] =
+                    [category.websites[index + 1], category.websites[index]];
+                saveData();
+                renderCategories();
+            } catch (error) {
+                showNotification('Failed to move website', 'error');
+            }
+        }
+
+        function searchWebsites(query) {
+            if (!query) {
+                renderCategories();
+                return;
+            }
+
+            const lowerQuery = query.toLowerCase();
+            const filteredCategories = categories.map(category => {
+                const filteredWebsites = category.websites.filter(website =>
+                    website.name.toLowerCase().includes(lowerQuery) ||
+                    website.url.toLowerCase().includes(lowerQuery)
+                );
+                return { ...category, websites: filteredWebsites };
+            }).filter(category => category.websites.length > 0);
+
+            categoriesContainer.innerHTML = '';
+            if (filteredCategories.length === 0) {
+                categoriesContainer.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <p>No websites found matching "${query}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredCategories.forEach(category => renderCategory(category));
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeData);
+        searchInput.addEventListener('input', e => searchWebsites(e.target.value));
+        closeAddWebsiteModal.addEventListener('click', closeModals);
+        closeAddCategoryModal.addEventListener('click', closeModals);
+        cancelAddWebsite.addEventListener('click', closeModals);
+        cancelAddCategory.addEventListener('click', closeModals);
+
+        addWebsiteForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('websiteName').value;
+            const url = document.getElementById('websiteUrl').value;
+            const categoryId = document.getElementById('websiteCategory').value;
+            addWebsite(name, url, categoryId);
+            closeModals();
+        });
+
+        addCategoryForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('categoryName').value;
+            addCategory(name);
+            closeModals();
+        });
+
+        window.addEventListener('click', e => {
+            if (e.target === addWebsiteModal || e.target === addCategoryModal) {
+                closeModals();
+            }
+        });
+
+        categoriesContainer.addEventListener('click', (e) => {
+            const categoryElement = e.target.closest('.category');
+            const websiteElement = e.target.closest('.website');
+            const categoryId = categoryElement?.dataset.id;
+
+            if (e.target.closest('.move-up') && !websiteElement) {
+                moveCategoryUp(categoryId);
+            }
+            if (e.target.closest('.move-down') && !websiteElement) {
+                moveCategoryDown(categoryId);
+            }
+            if (e.target.closest('.delete-category')) {
+                deleteCategory(categoryId);
+            }
+            if (e.target.closest('.add-website')) {
+                openAddWebsiteModal(categoryId);
+            }
+
+            if (websiteElement) {
+                const websiteId = websiteElement.dataset.id;
+                const websiteCategoryId = websiteElement.dataset.category;
+
+                if (e.target.closest('.move-up')) {
+                    moveWebsiteUp(websiteCategoryId, websiteId);
+                }
+                if (e.target.closest('.move-down')) {
+                    moveWebsiteDown(websiteCategoryId, websiteId);
+                }
+                if (e.target.closest('.delete-website')) {
+                    deleteWebsite(websiteCategoryId, websiteId);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
