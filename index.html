@@ -147,6 +147,16 @@
         .category:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            cursor: grab;
+        }
+
+        .category.dragging {
+            opacity: 0.5;
+            border: 2px dashed var(--accent);
+        }
+
+        .category.dragging:hover {
+            cursor: grabbing;
         }
 
         .category-header {
@@ -623,6 +633,55 @@
         </div>
     </div>
 
+    <div class="modal" id="editWebsiteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Website</h3>
+                <button class="modal-close" id="closeEditWebsiteModal">×</button>
+            </div>
+            <form id="editWebsiteForm">
+                <div class="form-group">
+                    <label for="editWebsiteName">Website Name</label>
+                    <input type="text" id="editWebsiteName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWebsiteUrl">Website URL</label>
+                    <input type="url" id="editWebsiteUrl" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWebsiteCategory">Category</label>
+                    <select id="editWebsiteCategory" required></select>
+                </div>
+                <input type="hidden" id="editWebsiteId">
+                <input type="hidden" id="editWebsiteCategoryId">
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEditWebsite">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="editCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Category</h3>
+                <button class="modal-close" id="closeEditCategoryModal">×</button>
+            </div>
+            <form id="editCategoryForm">
+                <div class="form-group">
+                    <label for="editCategoryName">Category Name</label>
+                    <input type="text" id="editCategoryName" required>
+                </div>
+                <input type="hidden" id="editCategoryId">
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEditCategory">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let categories = [
             {
@@ -691,15 +750,24 @@
         const searchInput = document.getElementById('searchInput');
         const addWebsiteModal = document.getElementById('addWebsiteModal');
         const addCategoryModal = document.getElementById('addCategoryModal');
+        const editWebsiteModal = document.getElementById('editWebsiteModal');
+        const editCategoryModal = document.getElementById('editCategoryModal');
         const notification = document.getElementById('notification');
         const closeAddWebsiteModal = document.getElementById('closeAddWebsiteModal');
         const closeAddCategoryModal = document.getElementById('closeAddCategoryModal');
+        const closeEditWebsiteModal = document.getElementById('closeEditWebsiteModal');
+        const closeEditCategoryModal = document.getElementById('closeEditCategoryModal');
         const addWebsiteForm = document.getElementById('addWebsiteForm');
         const addCategoryForm = document.getElementById('addCategoryForm');
+        const editWebsiteForm = document.getElementById('editWebsiteForm');
+        const editCategoryForm = document.getElementById('editCategoryForm');
         const websiteCategorySelect = document.getElementById('websiteCategory');
+        const editWebsiteCategorySelect = document.getElementById('editWebsiteCategory');
         const currentCategoryIdInput = document.getElementById('currentCategoryId');
         const cancelAddWebsite = document.getElementById('cancelAddWebsite');
         const cancelAddCategory = document.getElementById('cancelAddCategory');
+        const cancelEditWebsite = document.getElementById('cancelEditWebsite');
+        const cancelEditCategory = document.getElementById('cancelEditCategory');
         const googleSearchForm = document.getElementById('googleSearchForm');
 
         function showNotification(message, type = 'success') {
@@ -718,6 +786,7 @@
             }
             renderCategories();
             populateCategorySelect();
+            setupDragAndDrop();
         }
 
         function saveData() {
@@ -759,6 +828,7 @@
             const categoryElement = document.createElement('div');
             categoryElement.className = 'category';
             categoryElement.dataset.id = category.id;
+            categoryElement.draggable = true;
             categoryElement.style.animationDelay = `${delayFactor}s`;
 
             categoryElement.innerHTML = `
@@ -814,13 +884,61 @@
             }).join('');
         }
 
+        function setupDragAndDrop() {
+            const categoryElements = document.querySelectorAll('.category');
+            
+            categoryElements.forEach(category => {
+                category.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', category.dataset.id);
+                    category.classList.add('dragging');
+                });
+
+                category.addEventListener('dragend', () => {
+                    category.classList.remove('dragging');
+                });
+
+                category.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+
+                category.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    const targetId = category.dataset.id;
+
+                    if (draggedId !== targetId) {
+                        const draggedIndex = categories.findIndex(cat => cat.id === draggedId);
+                        const targetIndex = categories.findIndex(cat => cat.id === targetId);
+
+                        const [draggedCategory] = categories.splice(draggedIndex, 1);
+                        categories.splice(targetIndex, 0, draggedCategory);
+
+                        saveData();
+                        renderCategories();
+                        setupDragAndDrop();
+                        showNotification('Category reordered');
+                    }
+                });
+            });
+
+            categoriesContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+        }
+
         function populateCategorySelect() {
             websiteCategorySelect.innerHTML = '';
+            editWebsiteCategorySelect.innerHTML = '';
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.id;
                 option.textContent = category.name;
                 websiteCategorySelect.appendChild(option);
+                
+                const editOption = document.createElement('option');
+                editOption.value = category.id;
+                editOption.textContent = category.name;
+                editWebsiteCategorySelect.appendChild(editOption);
             });
         }
 
@@ -840,9 +958,31 @@
             addCategoryModal.classList.add('active');
         }
 
+        function openEditWebsiteModal(categoryId, websiteId) {
+            const category = categories.find(cat => cat.id === categoryId);
+            const website = category.websites.find(web => web.id === websiteId);
+            
+            document.getElementById('editWebsiteName').value = website.name;
+            document.getElementById('editWebsiteUrl').value = website.url;
+            document.getElementById('editWebsiteId').value = websiteId;
+            document.getElementById('editWebsiteCategoryId').value = categoryId;
+            
+            editWebsiteCategorySelect.value = categoryId;
+            editWebsiteModal.classList.add('active');
+        }
+
+        function openEditCategoryModal(categoryId) {
+            const category = categories.find(cat => cat.id === categoryId);
+            document.getElementById('editCategoryName').value = category.name;
+            document.getElementById('editCategoryId').value = categoryId;
+            editCategoryModal.classList.add('active');
+        }
+
         function closeModals() {
             addWebsiteModal.classList.remove('active');
             addCategoryModal.classList.remove('active');
+            editWebsiteModal.classList.remove('active');
+            editCategoryModal.classList.remove('active');
         }
 
         function addWebsite(name, url, categoryId) {
@@ -861,6 +1001,7 @@
                 category.websites.push(newWebsite);
                 saveData();
                 renderCategories();
+                setupDragAndDrop();
                 showNotification('Website added successfully');
             } catch (error) {
                 showNotification(error.message, 'error');
@@ -876,10 +1017,36 @@
                     category.websites = category.websites.filter(website => website.id !== websiteId);
                     saveData();
                     renderCategories();
+                    setupDragAndDrop();
                     showNotification('Website deleted successfully');
                 } catch (error) {
                     showNotification(error.message, 'error');
                 }
+            }
+        }
+
+        function editWebsite(websiteId, categoryId, newName, newUrl, newCategoryId) {
+            try {
+                const oldCategory = categories.find(cat => cat.id === categoryId);
+                const website = oldCategory.websites.find(web => web.id === websiteId);
+                
+                if (!website) throw new Error('Website not found');
+                
+                website.name = newName.trim();
+                website.url = newUrl.startsWith('http') ? newUrl : `https://${newUrl}`;
+                
+                if (categoryId !== newCategoryId) {
+                    oldCategory.websites = oldCategory.websites.filter(web => web.id !== websiteId);
+                    const newCategory = categories.find(cat => cat.id === newCategoryId);
+                    newCategory.websites.push(website);
+                }
+                
+                saveData();
+                renderCategories();
+                setupDragAndDrop();
+                showNotification('Website updated successfully');
+            } catch (error) {
+                showNotification(error.message, 'error');
             }
         }
 
@@ -901,7 +1068,28 @@
                 saveData();
                 renderCategories();
                 populateCategorySelect();
+                setupDragAndDrop();
                 showNotification('Category added successfully');
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+
+        function editCategory(categoryId, newName) {
+            try {
+                const category = categories.find(cat => cat.id === categoryId);
+                if (!category) throw new Error('Category not found');
+                
+                if (categories.some(cat => cat.id !== categoryId && cat.name.toLowerCase() === newName.toLowerCase())) {
+                    throw new Error('Category name already exists');
+                }
+                
+                category.name = newName.trim();
+                saveData();
+                renderCategories();
+                populateCategorySelect();
+                setupDragAndDrop();
+                showNotification('Category updated successfully');
             } catch (error) {
                 showNotification(error.message, 'error');
             }
@@ -914,6 +1102,7 @@
                     saveData();
                     renderCategories();
                     populateCategorySelect();
+                    setupDragAndDrop();
                     showNotification('Category deleted successfully');
                 } catch (error) {
                     showNotification(error.message, 'error');
@@ -929,6 +1118,7 @@
                 [categories[index - 1], categories[index]] = [categories[index], categories[index - 1]];
                 saveData();
                 renderCategories();
+                setupDragAndDrop();
                 showNotification('Category moved up');
             } catch (error) {
                 showNotification('Failed to move category', 'error');
@@ -943,6 +1133,7 @@
                 [categories[index], categories[index + 1]] = [categories[index + 1], categories[index]];
                 saveData();
                 renderCategories();
+                setupDragAndDrop();
                 showNotification('Category moved down');
             } catch (error) {
                 showNotification('Failed to move category', 'error');
@@ -961,6 +1152,8 @@
                     [category.websites[index], category.websites[index - 1]];
                 saveData();
                 renderCategories();
+                setupDragAndDrop();
+                showNotification('Website moved up');
             } catch (error) {
                 showNotification('Failed to move website', 'error');
             }
@@ -978,6 +1171,8 @@
                     [category.websites[index + 1], category.websites[index]];
                 saveData();
                 renderCategories();
+                setupDragAndDrop();
+                showNotification('Website moved down');
             } catch (error) {
                 showNotification('Failed to move website', 'error');
             }
@@ -986,6 +1181,7 @@
         function searchWebsites(query) {
             if (!query) {
                 renderCategories();
+                setupDragAndDrop();
                 return;
             }
 
@@ -1010,14 +1206,19 @@
             }
 
             filteredCategories.forEach(category => renderCategory(category));
+            setupDragAndDrop();
         }
 
         document.addEventListener('DOMContentLoaded', initializeData);
         searchInput.addEventListener('input', e => searchWebsites(e.target.value));
         closeAddWebsiteModal.addEventListener('click', closeModals);
         closeAddCategoryModal.addEventListener('click', closeModals);
+        closeEditWebsiteModal.addEventListener('click', closeModals);
+        closeEditCategoryModal.addEventListener('click', closeModals);
         cancelAddWebsite.addEventListener('click', closeModals);
         cancelAddCategory.addEventListener('click', closeModals);
+        cancelEditWebsite.addEventListener('click', closeModals);
+        cancelEditCategory.addEventListener('click', closeModals);
 
         addWebsiteForm.addEventListener('submit', e => {
             e.preventDefault();
@@ -1035,8 +1236,30 @@
             closeModals();
         });
 
+        editWebsiteForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const websiteId = document.getElementById('editWebsiteId').value;
+            const categoryId = document.getElementById('editWebsiteCategoryId').value;
+            const name = document.getElementById('editWebsiteName').value;
+            const url = document.getElementById('editWebsiteUrl').value;
+            const newCategoryId = document.getElementById('editWebsiteCategory').value;
+            editWebsite(websiteId, categoryId, name, url, newCategoryId);
+            closeModals();
+        });
+
+        editCategoryForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const categoryId = document.getElementById('editCategoryId').value;
+            const name = document.getElementById('editCategoryName').value;
+            editCategory(categoryId, name);
+            closeModals();
+        });
+
         window.addEventListener('click', e => {
-            if (e.target === addWebsiteModal || e.target === addCategoryModal) {
+            if (e.target === addWebsiteModal || 
+                e.target === addCategoryModal || 
+                e.target === editWebsiteModal || 
+                e.target === editCategoryModal) {
                 closeModals();
             }
         });
@@ -1055,6 +1278,9 @@
             if (e.target.closest('.delete-category')) {
                 deleteCategory(categoryId);
             }
+            if (e.target.closest('.edit-category')) {
+                openEditCategoryModal(categoryId);
+            }
             if (e.target.closest('.add-website')) {
                 openAddWebsiteModal(categoryId);
             }
@@ -1071,6 +1297,9 @@
                 }
                 if (e.target.closest('.delete-website')) {
                     deleteWebsite(websiteCategoryId, websiteId);
+                }
+                if (e.target.closest('.edit-website')) {
+                    openEditWebsiteModal(websiteCategoryId, websiteId);
                 }
             }
         });
