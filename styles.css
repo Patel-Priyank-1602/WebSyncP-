@@ -1,3 +1,4 @@
+/* Default variables (dark mode) */
 :root {
     --bg-primary: #121212;
     --bg-secondary: #1e1e1e;
@@ -9,6 +10,19 @@
     --danger: #e74c3c;
     --success: #2ecc71;
     --transition: all 0.3s ease;
+}
+
+/* Light mode variables */
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e0e0e0;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --accent: #6c5ce7;
+    --accent-hover: #8275e8;
+    --danger: #e74c3c;
+    --success: #2ecc71;
 }
 
 * {
@@ -37,6 +51,58 @@ header {
     gap: 20px;
 }
 
+/* Theme toggle styles */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--text-primary);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--accent);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -46,7 +112,7 @@ header {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #565454;
+    background: var(--text-secondary);
 }
 
 .logo {
@@ -58,7 +124,7 @@ header {
 .search-container {
     position: relative;
     width: 100%;
-    max-width: 200px;
+    max-width: 350px;
 }
 
 .search-container input {
@@ -481,7 +547,6 @@ main {
         transform: translateX(100%);
         opacity: 0;
     }
-
     to {
         transform: translateX(0);
         opacity: 1;
@@ -492,7 +557,6 @@ main {
     from {
         opacity: 1;
     }
-
     to {
         opacity: 0;
     }
@@ -502,7 +566,6 @@ main {
     from {
         opacity: 0;
     }
-
     to {
         opacity: 1;
     }
@@ -513,7 +576,6 @@ main {
         transform: translateY(20px);
         opacity: 0;
     }
-
     to {
         transform: translateY(0);
         opacity: 1;

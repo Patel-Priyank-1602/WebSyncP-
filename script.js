@@ -1,4 +1,3 @@
-
 let categories = [
     {
         id: 'social-media',
@@ -86,6 +85,30 @@ const cancelEditWebsite = document.getElementById('cancelEditWebsite');
 const cancelEditCategory = document.getElementById('cancelEditCategory');
 const googleSearchForm = document.getElementById('googleSearchForm');
 
+document.addEventListener('DOMContentLoaded', () => {
+    const themeSwitch = document.getElementById('themeSwitch');
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+
+    // Set initial theme
+    if (currentTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeSwitch.checked = true;
+    }
+
+    // Theme switch event listener
+    themeSwitch.addEventListener('change', () => {
+        if (themeSwitch.checked) {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+
+    initializeData();
+});
+
 function showNotification(message, type = 'success') {
     notification.textContent = message;
     notification.className = `notification ${type}`;
@@ -133,9 +156,9 @@ function renderCategories() {
     addCategoryElement.className = 'add-category';
     addCategoryElement.style.animationDelay = `${(categories.length + 1) * 0.1}s`;
     addCategoryElement.innerHTML = `
-                <i class="fas fa-plus"></i>
-                <span>Add New Category</span>
-            `;
+        <i class="fas fa-plus"></i>
+        <span>Add New Category</span>
+    `;
     addCategoryElement.addEventListener('click', () => openAddCategoryModal());
     categoriesContainer.appendChild(addCategoryElement);
 }
@@ -148,24 +171,24 @@ function renderCategory(category, delayFactor = 0) {
     categoryElement.style.animationDelay = `${delayFactor}s`;
 
     categoryElement.innerHTML = `
-                <div class="tooltip">${category.websites.length} websites</div>
-                <div class="category-header">
-                    <h3 class="category-title">${category.name}</h3>
-                    <div class="category-actions">
-                        <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
-                        <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
-                        <button class="edit-category" title="Edit Category"><i class="fas fa-edit"></i></button>
-                        <button class="delete-category" title="Delete Category"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-                <div class="websites" data-category-id="${category.id}">
-                    ${renderWebsites(category.websites, category.id)}
-                </div>
-                <div class="add-website" data-category="${category.id}">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Website</span>
-                </div>
-            `;
+        <div class="tooltip">${category.websites.length} websites</div>
+        <div class="category-header">
+            <h3 class="category-title">${category.name}</h3>
+            <div class="category-actions">
+                <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+                <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
+                <button class="edit-category" title="Edit Category"><i class="fas fa-edit"></i></button>
+                <button class="delete-category" title="Delete Category"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+        <div class="websites" data-category-id="${category.id}">
+            ${renderWebsites(category.websites, category.id)}
+        </div>
+        <div class="add-website" data-category="${category.id}">
+            <i class="fas fa-plus"></i>
+            <span>Add Website</span>
+        </div>
+    `;
 
     categoriesContainer.appendChild(categoryElement);
 }
@@ -182,21 +205,21 @@ function renderWebsites(websites, categoryId) {
             `<i class="fas fa-globe"></i>`;
 
         return `
-                <div class="website" data-id="${website.id}" data-category="${categoryId}" style="animation-delay: ${index * 0.05}s">
-                    <div class="website-icon">
-                        ${iconContent}
-                    </div>
-                    <a href="${website.url}" class="website-link" target="_blank" title="${website.url}">
-                        ${website.name}
-                    </a>
-                    <div class="website-actions">
-                        <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
-                        <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
-                        <button class="edit-website" title="Edit Website"><i class="fas fa-edit"></i></button>
-                        <button class="delete-website" title="Delete Website"><i class="fas fa-trash"></i></button>
-                    </div>
+            <div class="website" data-id="${website.id}" data-category="${categoryId}" style="animation-delay: ${index * 0.05}s">
+                <div class="website-icon">
+                    ${iconContent}
                 </div>
-                `;
+                <a href="${website.url}" class="website-link" target="_blank" title="${website.url}">
+                    ${website.name}
+                </a>
+                <div class="website-actions">
+                    <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+                    <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
+                    <button class="edit-website" title="Edit Website"><i class="fas fa-edit"></i></button>
+                    <button class="delete-website" title="Delete Website"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
     }).join('');
 }
 
@@ -502,22 +525,36 @@ function searchWebsites(query) {
     }
 
     const lowerQuery = query.toLowerCase();
-    const filteredCategories = categories.map(category => {
-        const filteredWebsites = category.websites.filter(website =>
-            website.name.toLowerCase().includes(lowerQuery) ||
-            website.url.toLowerCase().includes(lowerQuery)
-        );
-        return { ...category, websites: filteredWebsites };
-    }).filter(category => category.websites.length > 0);
+    const filteredCategories = categories
+        .map(category => {
+            // Check if category name matches
+            const categoryMatch = category.name.toLowerCase().includes(lowerQuery);
+            
+            // Filter websites within category
+            const filteredWebsites = category.websites.filter(website =>
+                website.name.toLowerCase().includes(lowerQuery) ||
+                website.url.toLowerCase().includes(lowerQuery)
+            );
+
+            // Return category if either the category name matches or there are matching websites
+            if (categoryMatch || filteredWebsites.length > 0) {
+                return {
+                    ...category,
+                    websites: categoryMatch ? category.websites : filteredWebsites
+                };
+            }
+            return null;
+        })
+        .filter(category => category !== null);
 
     categoriesContainer.innerHTML = '';
     if (filteredCategories.length === 0) {
         categoriesContainer.innerHTML = `
-                    <div class="no-results">
-                        <i class="fas fa-search"></i>
-                        <p>No websites found matching "${query}"</p>
-                    </div>
-                `;
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>No categories or websites found matching "${query}"</p>
+            </div>
+        `;
         return;
     }
 
@@ -525,7 +562,7 @@ function searchWebsites(query) {
     setupDragAndDrop();
 }
 
-document.addEventListener('DOMContentLoaded', initializeData);
+// Event Listeners
 searchInput.addEventListener('input', e => searchWebsites(e.target.value));
 closeAddWebsiteModal.addEventListener('click', closeModals);
 closeAddCategoryModal.addEventListener('click', closeModals);
