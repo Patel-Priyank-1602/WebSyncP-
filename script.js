@@ -113,7 +113,10 @@ function showNotification(message, type = 'success') {
     notification.textContent = message;
     notification.className = `notification ${type}`;
     notification.style.display = 'block';
-    setTimeout(() => {
+    if (notification.timeoutId) {
+        clearTimeout(notification.timeoutId);
+    }
+    notification.timeoutId = setTimeout(() => {
         notification.style.display = 'none';
     }, 3000);
 }
