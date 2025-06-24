@@ -602,6 +602,35 @@ main {
     background-position: center;
 }
 
+/* Footer styles */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    margin-top: 30px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--bg-tertiary);
+    border-radius: 10px;
+    transition: var(--transition);
+}
+
+.footer p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.footer a.btn-secondary {
+    text-decoration: none;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.footer a.btn-secondary:hover {
+    color: var(--text-primary);
+    background-color: var(--accent);
+}
+
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -612,5 +641,16 @@ main {
     .search-container,
     .google-search-container {
         max-width: 100%;
+    }
+
+    .footer {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .footer a.btn-secondary {
+        width: 100%;
+        max-width: 200px;
     }
 }
