@@ -85,16 +85,22 @@ const cancelEditWebsite = document.getElementById('cancelEditWebsite');
 const cancelEditCategory = document.getElementById('cancelEditCategory');
 const googleSearchForm = document.getElementById('googleSearchForm');
 
+let draggedWebsite = null;
+let draggedCategory = null;
+let longPressTimer = null;
+let longPressActive = false;
+let isDragging = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     const themeSwitch = document.getElementById('themeSwitch');
     const currentTheme = localStorage.getItem('theme') || 'dark';
-
+    
     // Set initial theme
     if (currentTheme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
         themeSwitch.checked = true;
     }
-
+    
     // Theme switch event listener
     themeSwitch.addEventListener('change', () => {
         if (themeSwitch.checked) {
@@ -105,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('theme', 'dark');
         }
     });
-
+    
     initializeData();
 });
 
@@ -113,9 +119,11 @@ function showNotification(message, type = 'success') {
     notification.textContent = message;
     notification.className = `notification ${type}`;
     notification.style.display = 'block';
+    
     if (notification.timeoutId) {
         clearTimeout(notification.timeoutId);
     }
+    
     notification.timeoutId = setTimeout(() => {
         notification.style.display = 'none';
     }, 3000);
@@ -151,10 +159,12 @@ function getFaviconUrl(url) {
 
 function renderCategories() {
     categoriesContainer.innerHTML = '';
+    
     categories.forEach(category => {
         const delayFactor = categories.indexOf(category) * 0.1;
         renderCategory(category, delayFactor);
     });
+    
     const addCategoryElement = document.createElement('div');
     addCategoryElement.className = 'add-category';
     addCategoryElement.style.animationDelay = `${(categories.length + 1) * 0.1}s`;
@@ -172,7 +182,7 @@ function renderCategory(category, delayFactor = 0) {
     categoryElement.dataset.id = category.id;
     categoryElement.draggable = true;
     categoryElement.style.animationDelay = `${delayFactor}s`;
-
+    
     categoryElement.innerHTML = `
         <div class="tooltip">${category.websites.length} websites</div>
         <div class="category-header">
@@ -192,7 +202,7 @@ function renderCategory(category, delayFactor = 0) {
             <span>Add Website</span>
         </div>
     `;
-
+    
     categoriesContainer.appendChild(categoryElement);
 }
 
@@ -200,21 +210,21 @@ function renderWebsites(websites, categoryId) {
     if (websites.length === 0) {
         return '<div class="no-websites">No websites added yet</div>';
     }
-
+    
     return websites.map((website, index) => {
         const faviconUrl = getFaviconUrl(website.url);
-        const iconContent = faviconUrl ?
+        const iconContent = faviconUrl ? 
             `<img src="${faviconUrl}" alt="${website.name}" onerror="this.onerror=null; this.parentNode.innerHTML='<i class=\'fas fa-globe\'></i>';">` :
             `<i class="fas fa-globe"></i>`;
-
+        
         return `
-            <div class="website" data-id="${website.id}" data-category="${categoryId}" style="animation-delay: ${index * 0.05}s">
+            <div class="website" data-id="${website.id}" data-category="${categoryId}" data-url="${website.url}" style="animation-delay: ${index * 0.05}s">
                 <div class="website-icon">
                     ${iconContent}
                 </div>
-                <a href="${website.url}" class="website-link" target="_blank" title="${website.url}">
+                <span class="website-link" title="${website.url}">
                     ${website.name}
-                </a>
+                </span>
                 <div class="website-actions">
                     <button class="move-up" title="Move Up"><i class="fas fa-arrow-up"></i></button>
                     <button class="move-down" title="Move Down"><i class="fas fa-arrow-down"></i></button>
@@ -226,57 +236,284 @@ function renderWebsites(websites, categoryId) {
     }).join('');
 }
 
-function setupDragAndDrop() {
-    const categoryElements = document.querySelectorAll('.category');
+function setupWebsiteLongPress() {
+    const websiteElements = document.querySelectorAll('.website');
+    
+    websiteElements.forEach(website => {
+        // Mouse events
+        website.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.website-actions')) return;
+            
+            longPressTimer = setTimeout(() => {
+                activateLongPress(website);
+            }, 500); // 500ms for long press
+        });
+        
+        website.addEventListener('mouseup', (e) => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            
+            if (!longPressActive && !isDragging && !e.target.closest('.website-actions')) {
+                // Single click - open website
+                const url = website.dataset.url;
+                window.open(url, '_blank');
+            }
+        });
+        
+        website.addEventListener('mouseleave', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        // Touch events
+        website.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.website-actions')) return;
+            
+            longPressTimer = setTimeout(() => {
+                activateLongPress(website);
+            }, 500);
+        });
+        
+        website.addEventListener('touchend', (e) => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            
+            if (!longPressActive && !isDragging && !e.target.closest('.website-actions')) {
+                // Single tap - open website
+                const url = website.dataset.url;
+                window.open(url, '_blank');
+            }
+        });
+        
+        website.addEventListener('touchcancel', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+        
+        // Drag events (only active when long press is active)
+        website.addEventListener('dragstart', (e) => {
+            if (!longPressActive) {
+                e.preventDefault();
+                return;
+            }
+            
+            e.stopPropagation();
+            isDragging = true;
+            draggedWebsite = {
+                id: website.dataset.id,
+                categoryId: website.dataset.category
+            };
+            website.classList.add('dragging');
+        });
+        
+        website.addEventListener('dragend', () => {
+            website.classList.remove('dragging');
+            website.classList.remove('long-press-active');
+            draggedWebsite = null;
+            longPressActive = false;
+            isDragging = false;
+        });
+    });
+}
 
+function activateLongPress(website) {
+    longPressActive = true;
+    website.classList.add('long-press-active');
+    website.draggable = true;
+    
+    // Vibrate if supported (mobile)
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+    
+    showNotification('Drag mode activated', 'success');
+    
+    // Auto-deactivate after 5 seconds if not used
+    setTimeout(() => {
+        if (longPressActive && !isDragging) {
+            deactivateLongPress(website);
+        }
+    }, 5000);
+}
+
+function deactivateLongPress(website) {
+    longPressActive = false;
+    website.classList.remove('long-press-active');
+    website.draggable = false;
+}
+
+function setupDragAndDrop() {
+    // Category drag and drop
+    const categoryElements = document.querySelectorAll('.category');
     categoryElements.forEach(category => {
         category.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('website')) return;
             e.dataTransfer.setData('text/plain', category.dataset.id);
             category.classList.add('dragging');
+            draggedCategory = category.dataset.id;
         });
-
+        
         category.addEventListener('dragend', () => {
             category.classList.remove('dragging');
+            draggedCategory = null;
         });
-
+        
         category.addEventListener('dragover', (e) => {
             e.preventDefault();
+            if (draggedCategory && draggedCategory !== category.dataset.id) {
+                category.classList.add('drag-over');
+            }
         });
-
+        
+        category.addEventListener('dragleave', () => {
+            category.classList.remove('drag-over');
+        });
+        
         category.addEventListener('drop', (e) => {
             e.preventDefault();
-            const draggedId = e.dataTransfer.getData('text/plain');
-            const targetId = category.dataset.id;
-
-            if (draggedId !== targetId) {
-                const draggedIndex = categories.findIndex(cat => cat.id === draggedId);
-                const targetIndex = categories.findIndex(cat => cat.id === targetId);
-
-                const [draggedCategory] = categories.splice(draggedIndex, 1);
-                categories.splice(targetIndex, 0, draggedCategory);
-
-                saveData();
-                renderCategories();
-                setupDragAndDrop();
-                showNotification('Category reordered');
+            category.classList.remove('drag-over');
+            
+            if (draggedCategory) {
+                const draggedId = draggedCategory;
+                const targetId = category.dataset.id;
+                
+                if (draggedId !== targetId) {
+                    const draggedIndex = categories.findIndex(cat => cat.id === draggedId);
+                    const targetIndex = categories.findIndex(cat => cat.id === targetId);
+                    
+                    const [draggedCategoryObj] = categories.splice(draggedIndex, 1);
+                    categories.splice(targetIndex, 0, draggedCategoryObj);
+                    
+                    saveData();
+                    renderCategories();
+                    setupDragAndDrop();
+                    showNotification('Category reordered');
+                }
             }
         });
     });
-
+    
+    // Website container drag and drop
+    const websiteContainers = document.querySelectorAll('.websites');
+    websiteContainers.forEach(container => {
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (draggedWebsite) {
+                container.classList.add('drag-over');
+            }
+        });
+        
+        container.addEventListener('dragleave', (e) => {
+            if (!container.contains(e.relatedTarget)) {
+                container.classList.remove('drag-over');
+            }
+        });
+        
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.remove('drag-over');
+            
+            if (draggedWebsite) {
+                const targetCategoryId = container.dataset.categoryId;
+                const sourceCategoryId = draggedWebsite.categoryId;
+                const websiteId = draggedWebsite.id;
+                
+                // Find source and target categories
+                const sourceCategory = categories.find(cat => cat.id === sourceCategoryId);
+                const targetCategory = categories.find(cat => cat.id === targetCategoryId);
+                
+                if (sourceCategory && targetCategory) {
+                    // Find the website
+                    const websiteIndex = sourceCategory.websites.findIndex(web => web.id === websiteId);
+                    const website = sourceCategory.websites[websiteIndex];
+                    
+                    if (website) {
+                        // Calculate drop position
+                        const afterElement = getDragAfterElement(container, e.clientY);
+                        
+                        if (sourceCategoryId === targetCategoryId) {
+                            // Reordering within same category
+                            sourceCategory.websites.splice(websiteIndex, 1);
+                            
+                            if (afterElement) {
+                                const afterIndex = sourceCategory.websites.findIndex(web => 
+                                    web.id === afterElement.dataset.id
+                                );
+                                sourceCategory.websites.splice(afterIndex, 0, website);
+                            } else {
+                                sourceCategory.websites.push(website);
+                            }
+                            
+                            showNotification('Website reordered');
+                        } else {
+                            // Moving between categories
+                            sourceCategory.websites.splice(websiteIndex, 1);
+                            
+                            if (afterElement) {
+                                const afterIndex = targetCategory.websites.findIndex(web => 
+                                    web.id === afterElement.dataset.id
+                                );
+                                targetCategory.websites.splice(afterIndex, 0, website);
+                            } else {
+                                targetCategory.websites.push(website);
+                            }
+                            
+                            showNotification(`Website moved to ${targetCategory.name}`);
+                        }
+                        
+                        saveData();
+                        renderCategories();
+                        setupDragAndDrop();
+                    }
+                }
+            }
+        });
+    });
+    
+    // Setup website long press functionality
+    setupWebsiteLongPress();
+    
     categoriesContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
     });
 }
 
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.website:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
 function populateCategorySelect() {
     websiteCategorySelect.innerHTML = '';
     editWebsiteCategorySelect.innerHTML = '';
+    
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category.id;
         option.textContent = category.name;
         websiteCategorySelect.appendChild(option);
-
+        
         const editOption = document.createElement('option');
         editOption.value = category.id;
         editOption.textContent = category.name;
@@ -303,13 +540,13 @@ function openAddCategoryModal() {
 function openEditWebsiteModal(categoryId, websiteId) {
     const category = categories.find(cat => cat.id === categoryId);
     const website = category.websites.find(web => web.id === websiteId);
-
+    
     document.getElementById('editWebsiteName').value = website.name;
     document.getElementById('editWebsiteUrl').value = website.url;
     document.getElementById('editWebsiteId').value = websiteId;
     document.getElementById('editWebsiteCategoryId').value = categoryId;
-
     editWebsiteCategorySelect.value = categoryId;
+    
     editWebsiteModal.classList.add('active');
 }
 
@@ -331,15 +568,14 @@ function addWebsite(name, url, categoryId) {
     try {
         const category = categories.find(cat => cat.id === categoryId);
         if (!category) throw new Error('Category not found');
-
         if (!name || !url) throw new Error('Name and URL are required');
-
+        
         const newWebsite = {
             id: `website-${Date.now()}`,
             name: name.trim(),
             url: url.startsWith('http') ? url : `https://${url}`
         };
-
+        
         category.websites.push(newWebsite);
         saveData();
         renderCategories();
@@ -355,7 +591,7 @@ function deleteWebsite(categoryId, websiteId) {
         try {
             const category = categories.find(cat => cat.id === categoryId);
             if (!category) throw new Error('Category not found');
-
+            
             category.websites = category.websites.filter(website => website.id !== websiteId);
             saveData();
             renderCategories();
@@ -371,18 +607,18 @@ function editWebsite(websiteId, categoryId, newName, newUrl, newCategoryId) {
     try {
         const oldCategory = categories.find(cat => cat.id === categoryId);
         const website = oldCategory.websites.find(web => web.id === websiteId);
-
+        
         if (!website) throw new Error('Website not found');
-
+        
         website.name = newName.trim();
         website.url = newUrl.startsWith('http') ? newUrl : `https://${newUrl}`;
-
+        
         if (categoryId !== newCategoryId) {
             oldCategory.websites = oldCategory.websites.filter(web => web.id !== websiteId);
             const newCategory = categories.find(cat => cat.id === newCategoryId);
             newCategory.websites.push(website);
         }
-
+        
         saveData();
         renderCategories();
         setupDragAndDrop();
@@ -398,14 +634,14 @@ function addCategory(name) {
         if (categories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
             throw new Error('Category already exists');
         }
-
+        
         const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
         const newCategory = {
             id: `${id}-${Date.now()}`,
             name: name.trim(),
             websites: []
         };
-
+        
         categories.push(newCategory);
         saveData();
         renderCategories();
@@ -421,11 +657,11 @@ function editCategory(categoryId, newName) {
     try {
         const category = categories.find(cat => cat.id === categoryId);
         if (!category) throw new Error('Category not found');
-
+        
         if (categories.some(cat => cat.id !== categoryId && cat.name.toLowerCase() === newName.toLowerCase())) {
             throw new Error('Category name already exists');
         }
-
+        
         category.name = newName.trim();
         saveData();
         renderCategories();
@@ -456,7 +692,7 @@ function moveCategoryUp(categoryId) {
     try {
         const index = categories.findIndex(cat => cat.id === categoryId);
         if (index <= 0) return;
-
+        
         [categories[index - 1], categories[index]] = [categories[index], categories[index - 1]];
         saveData();
         renderCategories();
@@ -471,7 +707,7 @@ function moveCategoryDown(categoryId) {
     try {
         const index = categories.findIndex(cat => cat.id === categoryId);
         if (index === -1 || index >= categories.length - 1) return;
-
+        
         [categories[index], categories[index + 1]] = [categories[index + 1], categories[index]];
         saveData();
         renderCategories();
@@ -486,12 +722,13 @@ function moveWebsiteUp(categoryId, websiteId) {
     try {
         const category = categories.find(cat => cat.id === categoryId);
         if (!category) throw new Error('Category not found');
-
+        
         const index = category.websites.findIndex(website => website.id === websiteId);
         if (index <= 0) return;
-
-        [category.websites[index - 1], category.websites[index]] =
+        
+        [category.websites[index - 1], category.websites[index]] = 
             [category.websites[index], category.websites[index - 1]];
+        
         saveData();
         renderCategories();
         setupDragAndDrop();
@@ -505,12 +742,13 @@ function moveWebsiteDown(categoryId, websiteId) {
     try {
         const category = categories.find(cat => cat.id === categoryId);
         if (!category) throw new Error('Category not found');
-
+        
         const index = category.websites.findIndex(website => website.id === websiteId);
         if (index === -1 || index >= category.websites.length - 1) return;
-
-        [category.websites[index], category.websites[index + 1]] =
+        
+        [category.websites[index], category.websites[index + 1]] = 
             [category.websites[index + 1], category.websites[index]];
+        
         saveData();
         renderCategories();
         setupDragAndDrop();
@@ -526,7 +764,7 @@ function searchWebsites(query) {
         setupDragAndDrop();
         return;
     }
-
+    
     const lowerQuery = query.toLowerCase();
     const filteredCategories = categories
         .map(category => {
@@ -538,7 +776,7 @@ function searchWebsites(query) {
                 website.name.toLowerCase().includes(lowerQuery) ||
                 website.url.toLowerCase().includes(lowerQuery)
             );
-
+            
             // Return category if either the category name matches or there are matching websites
             if (categoryMatch || filteredWebsites.length > 0) {
                 return {
@@ -549,8 +787,9 @@ function searchWebsites(query) {
             return null;
         })
         .filter(category => category !== null);
-
+    
     categoriesContainer.innerHTML = '';
+    
     if (filteredCategories.length === 0) {
         categoriesContainer.innerHTML = `
             <div class="no-results">
@@ -560,17 +799,19 @@ function searchWebsites(query) {
         `;
         return;
     }
-
+    
     filteredCategories.forEach(category => renderCategory(category));
     setupDragAndDrop();
 }
 
 // Event Listeners
 searchInput.addEventListener('input', e => searchWebsites(e.target.value));
+
 closeAddWebsiteModal.addEventListener('click', closeModals);
 closeAddCategoryModal.addEventListener('click', closeModals);
 closeEditWebsiteModal.addEventListener('click', closeModals);
 closeEditCategoryModal.addEventListener('click', closeModals);
+
 cancelAddWebsite.addEventListener('click', closeModals);
 cancelAddCategory.addEventListener('click', closeModals);
 cancelEditWebsite.addEventListener('click', closeModals);
@@ -612,9 +853,9 @@ editCategoryForm.addEventListener('submit', e => {
 });
 
 window.addEventListener('click', e => {
-    if (e.target === addWebsiteModal ||
-        e.target === addCategoryModal ||
-        e.target === editWebsiteModal ||
+    if (e.target === addWebsiteModal || 
+        e.target === addCategoryModal || 
+        e.target === editWebsiteModal || 
         e.target === editCategoryModal) {
         closeModals();
     }
@@ -624,36 +865,48 @@ categoriesContainer.addEventListener('click', (e) => {
     const categoryElement = e.target.closest('.category');
     const websiteElement = e.target.closest('.website');
     const categoryId = categoryElement?.dataset.id;
-
+    
+    // Prevent action buttons from triggering during drag
+    if (e.target.closest('.website-actions') && (draggedWebsite || longPressActive)) {
+        return;
+    }
+    
     if (e.target.closest('.move-up') && !websiteElement) {
         moveCategoryUp(categoryId);
     }
+    
     if (e.target.closest('.move-down') && !websiteElement) {
         moveCategoryDown(categoryId);
     }
+    
     if (e.target.closest('.delete-category')) {
         deleteCategory(categoryId);
     }
+    
     if (e.target.closest('.edit-category')) {
         openEditCategoryModal(categoryId);
     }
+    
     if (e.target.closest('.add-website')) {
         openAddWebsiteModal(categoryId);
     }
-
+    
     if (websiteElement) {
         const websiteId = websiteElement.dataset.id;
         const websiteCategoryId = websiteElement.dataset.category;
-
+        
         if (e.target.closest('.move-up')) {
             moveWebsiteUp(websiteCategoryId, websiteId);
         }
+        
         if (e.target.closest('.move-down')) {
             moveWebsiteDown(websiteCategoryId, websiteId);
         }
+        
         if (e.target.closest('.delete-website')) {
             deleteWebsite(websiteCategoryId, websiteId);
         }
+        
         if (e.target.closest('.edit-website')) {
             openEditWebsiteModal(websiteCategoryId, websiteId);
         }
