@@ -11,7 +11,9 @@
 <body>
     <div id="notification" class="notification"></div>
     <header>
-        <div class="logo"><big>WebSync</big></div>
+        <div class="left-controls">
+            <div class="logo"><big>WebSync</big></div>
+        </div>
         <div class="google-search-container">
             <form id="googleSearchForm" action="https://www.google.com/search" method="get" target="_blank">
                 <input type="text" id="googleSearchInput" name="q" placeholder="Google Search...">
@@ -22,16 +24,166 @@
             <input type="text" id="searchInput" placeholder="Search websites...">
             <i class="fas fa-search"></i>
         </div>
-        <div class="theme-toggle">
-            <label class="switch">
-                <input type="checkbox" id="themeSwitch">
-                <span class="slider"></span>
-            </label>
+        <div class="right-controls">
+            <div class="menu-toggle">
+                <button id="menuToggleBtn" class="menu-toggle-btn" title="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </header>
+    <!-- Right Side Menu -->
+    <div class="right-menu" id="rightMenu">
+        <div class="menu-header">
+            <h3>Settings</h3>
+            <button class="menu-close" id="closeMenu">×</button>
+        </div>
+        <div class="menu-content">
+            <div class="menu-item">
+                <div class="menu-item-header">
+                    <i class="fas fa-palette"></i>
+                    <span>Theme Mode</span>
+                </div>
+                <div class="theme-switch">
+                    <button id="themeToggleBtn" class="theme-toggle-btn">
+                        <i class="fas fa-moon"></i>
+                        <span id="themeText">Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-item-header">
+                    <i class="fas fa-eye"></i>
+                    <span>View Mode</span>
+                </div>
+                <div class="view-switch">
+                    <button id="viewToggleBtn" class="view-toggle-btn">
+                        <i class="fas fa-th"></i>
+                        <span id="viewText">Grid View</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="menu-item" id="backgroundMenuItem" style="display: none;">
+                <div class="menu-item-header">
+                    <i class="fas fa-image"></i>
+                    <span>Background Image</span>
+                </div>
+                <button id="backgroundToggleBtn" class="menu-action-btn">
+                    <i class="fas fa-cog"></i>
+                    Change Background
+                </button>
+            </div>
+            
+            <!-- Custom Website Images option removed from here -->
+        </div>
+    </div>
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
     <main>
         <div class="categories" id="categories"></div>
+        <div class="grid-view" id="gridView" style="display: none;">
+            <div class="add-website-grid" id="addWebsiteGrid">
+                <div class="add-website-grid-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="add-website-grid-name">Add Website</div>
+            </div>
+        </div>
     </main>
+
+    <!-- Background Modal -->
+    <div class="modal" id="backgroundModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Change Background</h3>
+                <button class="modal-close" id="closeBackgroundModal">×</button>
+            </div>
+            <div class="background-options">
+                <div class="form-group">
+                    <label for="backgroundUrl">Background Image URL</label>
+                    <input type="url" id="backgroundUrl" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="form-group">
+                    <label for="backgroundFile">Upload Background Image</label>
+                    <input type="file" id="backgroundFile" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="backgroundOpacity">Background Opacity</label>
+                    <input type="range" id="backgroundOpacity" min="0.1" max="1" step="0.1" value="0.3">
+                    <span id="opacityValue">30%</span>
+                </div>
+                <div class="background-presets">
+                    <h4>Quick Presets</h4>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" data-bg="none">No Background</button>
+                        <button class="preset-btn" data-bg="gradient1">Gradient 1</button>
+                        <button class="preset-btn" data-bg="gradient2">Gradient 2</button>
+                        <button class="preset-btn" data-bg="gradient3">Gradient 3</button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBackground">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="applyBackground">Apply Background</button>
+                    <button type="button" class="btn btn-danger" id="removeBackground">Remove Background</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Insert Modal -->
+    <div class="modal" id="imageInsertModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Insert Custom Website Image</h3>
+                <button class="modal-close" id="closeImageInsertModal">×</button>
+            </div>
+            <div class="image-insert-options">
+                <div class="form-group">
+                    <label for="selectWebsite">Select Website</label>
+                    <select id="selectWebsite" required>
+                        <option value="">Choose a website...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="customImageUrl">Custom Image URL</label>
+                    <input type="url" id="customImageUrl" placeholder="https://example.com/custom-icon.png">
+                </div>
+                <div class="form-group">
+                    <label for="customImageFile">Upload Custom Image</label>
+                    <input type="file" id="customImageFile" accept="image/*">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelImageInsert">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="applyCustomImage">Apply Custom Image</button>
+                    <button type="button" class="btn btn-danger" id="resetWebsiteImage">Reset to Favicon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="editWebsiteContext">
+            <i class="fas fa-edit"></i>
+            Edit Website
+        </div>
+        <div class="context-menu-item" id="deleteWebsiteContext">
+            <i class="fas fa-trash"></i>
+            Delete Website
+        </div>
+        <div class="context-menu-item" id="openWebsiteContext">
+            <i class="fas fa-external-link-alt"></i>
+            Open Website
+        </div>
+        <div class="context-menu-item" id="customImageContext">
+            <i class="fas fa-image"></i>
+            Custom Image
+        </div>
+    </div>
+
     <div class="modal" id="addWebsiteModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -100,7 +252,13 @@
                 <input type="hidden" id="editWebsiteCategoryId">
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelEditWebsite">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-primary" id="saveEditWebsite">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="customizeImageBtn">
+                        <i class="fas fa-image"></i> Customize Image
+                    </button>
+                    <button type="button" class="btn btn-danger" id="deleteWebsiteBtn">
+                        <i class="fas fa-trash"></i> Delete Website
+                    </button>
                 </div>
             </form>
         </div>
