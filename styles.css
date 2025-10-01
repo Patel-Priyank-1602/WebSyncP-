@@ -67,6 +67,12 @@ header {
   border-bottom: 1px solid var(--bg-tertiary);
   flex-wrap: wrap;
   gap: 20px;
+  /* --- FIXED STICKY HEADER --- */
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  backdrop-filter: blur(25px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .left-controls {
