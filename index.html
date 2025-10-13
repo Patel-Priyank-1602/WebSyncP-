@@ -76,6 +76,17 @@
                 </button>
             </div>
             
+            <div class="menu-item">
+                <div class="menu-item-header">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Share & Backup</span>
+                </div>
+                <button id="sharingToggleBtn" class="menu-action-btn">
+                    <i class="fas fa-share"></i>
+                    Share Setup
+                </button>
+            </div>
+            
             <!-- Custom Website Images option removed from here -->
         </div>
     </div>
@@ -280,6 +291,76 @@
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Sharing Modal -->
+    <div class="modal" id="sharingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share & Backup</h3>
+                <button class="modal-close" id="closeSharingModal">×</button>
+            </div>
+            <div class="sharing-options">
+                <div class="sharing-section">
+                    <h4><i class="fas fa-share-alt"></i> Share Your Setup</h4>
+                    <p>Share your customized website collection with friends</p>
+                    <div class="sharing-buttons">
+                        <button type="button" class="btn btn-primary" id="copyShareURL">
+                            <i class="fas fa-link"></i> Copy Shareable Link
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="exportData">
+                            <i class="fas fa-download"></i> Export as File
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sharing-section">
+                    <h4><i class="fas fa-upload"></i> Import Setup</h4>
+                    <p>Load a shared or backed up website collection</p>
+                    <div class="form-group">
+                        <label for="importFile">Select File to Import</label>
+                        <input type="file" id="importFile" accept=".json" />
+                    </div>
+                    <div class="sharing-buttons">
+                        <button type="button" class="btn btn-primary" id="importData">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sharing-section">
+                    <h4><i class="fas fa-cog"></i> Data Management</h4>
+                    <p>Manage your current data</p>
+                    <div class="sharing-buttons">
+                        <button type="button" class="btn btn-danger" id="resetData">
+                            <i class="fas fa-undo"></i> Reset to Default
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sharing-info">
+                    <h4><i class="fas fa-info-circle"></i> How to Share</h4>
+                    <div class="info-steps">
+                        <div class="step">
+                            <span class="step-number">1</span>
+                            <span class="step-text">Customize your website collection</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Click "Copy Shareable Link" or "Export as File"</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <span class="step-text">Send the link/file to your friend</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">4</span>
+                            <span class="step-text">Your friend opens the link or imports the file</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <footer class="footer">

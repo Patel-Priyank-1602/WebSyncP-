@@ -117,6 +117,14 @@ const backgroundMenuItem = document.getElementById("backgroundMenuItem");
 const themeText = document.getElementById("themeText");
 const viewText = document.getElementById("viewText");
 const customizeImageBtn = document.getElementById("customizeImageBtn");
+const sharingModal = document.getElementById("sharingModal");
+const closeSharingModal = document.getElementById("closeSharingModal");
+const sharingToggleBtn = document.getElementById("sharingToggleBtn");
+const copyShareURL = document.getElementById("copyShareURL");
+const exportDataBtn = document.getElementById("exportData");
+const importDataBtn = document.getElementById("importData");
+const importFile = document.getElementById("importFile");
+const resetDataBtn = document.getElementById("resetData");
 
 let draggedWebsite = null;
 let draggedCategory = null;
@@ -128,6 +136,9 @@ let currentContextWebsite = null;
 let customImages = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Check for shared data in URL first
+  loadFromURL();
+  
   const currentTheme = localStorage.getItem("theme") || "dark";
 
   // Set initial theme
@@ -1104,6 +1115,7 @@ function closeModals() {
   editWebsiteModal.classList.remove("active");
   editCategoryModal.classList.remove("active");
   imageInsertModal.classList.remove("active");
+  sharingModal.classList.remove("active");
 }
 
 function addWebsite(name, url, categoryId) {
@@ -1524,6 +1536,40 @@ deleteWebsiteBtn.addEventListener("click", () => {
   closeModals();
 });
 
+// Sharing functionality event listeners
+sharingToggleBtn.addEventListener("click", () => {
+  sharingModal.classList.add("active");
+  closeRightMenu();
+});
+
+closeSharingModal.addEventListener("click", () => {
+  sharingModal.classList.remove("active");
+});
+
+copyShareURL.addEventListener("click", () => {
+  copyShareableURL();
+  sharingModal.classList.remove("active");
+});
+
+exportDataBtn.addEventListener("click", () => {
+  exportData();
+  sharingModal.classList.remove("active");
+});
+
+importDataBtn.addEventListener("click", () => {
+  if (importFile.files.length > 0) {
+    importData(importFile.files[0]);
+    sharingModal.classList.remove("active");
+  } else {
+    showNotification("Please select a file to import", "error");
+  }
+});
+
+resetDataBtn.addEventListener("click", () => {
+  resetToDefault();
+  sharingModal.classList.remove("active");
+});
+
 window.addEventListener("click", (e) => {
   if (
     e.target === addWebsiteModal ||
@@ -1532,10 +1578,12 @@ window.addEventListener("click", (e) => {
     e.target === editCategoryModal ||
     e.target === backgroundModal ||
     e.target === imageInsertModal ||
+    e.target === sharingModal ||
     e.target === menuOverlay
   ) {
     closeModals();
     backgroundModal.classList.remove("active");
+    sharingModal.classList.remove("active");
     closeRightMenu();
   }
 });
@@ -1821,5 +1869,278 @@ function loadSavedBackground() {
     applyBackgroundImage(savedImage, savedOpacity, isGradient);
     backgroundOpacity.value = savedOpacity;
     opacityValue.textContent = `${Math.round(savedOpacity * 100)}%`;
+  }
+}
+
+// ==================== SHARING FUNCTIONALITY ====================
+
+// Export data as JSON
+function exportData() {
+  const exportData = {
+    categories: categories,
+    customImages: customImages,
+    backgroundImage: localStorage.getItem("backgroundImage"),
+    backgroundOpacity: localStorage.getItem("backgroundOpacity"),
+    backgroundIsGradient: localStorage.getItem("backgroundIsGradient"),
+    theme: localStorage.getItem("theme"),
+    viewMode: localStorage.getItem("viewMode"),
+    exportDate: new Date().toISOString(),
+    version: "1.0"
+  };
+  
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataBlob = new Blob([dataStr], {type: 'application/json'});
+  
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `websync-backup-${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  
+  showNotification("Data exported successfully!", "success");
+}
+
+// Import data from JSON file
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importData = JSON.parse(e.target.result);
+      
+      // Validate the data structure
+      if (!importData.categories || !Array.isArray(importData.categories)) {
+        throw new Error("Invalid data format");
+      }
+      
+      // Ask for confirmation
+      const confirmMessage = `This will replace your current data with the imported data.\n\n` +
+        `Categories: ${importData.categories.length}\n` +
+        `Total Websites: ${importData.categories.reduce((sum, cat) => sum + cat.websites.length, 0)}\n` +
+        `Export Date: ${importData.exportDate ? new Date(importData.exportDate).toLocaleString() : 'Unknown'}\n\n` +
+        `Are you sure you want to continue?`;
+      
+      if (confirm(confirmMessage)) {
+        // Import categories
+        categories = importData.categories;
+        
+        // Import custom images
+        if (importData.customImages) {
+          customImages = importData.customImages;
+          saveCustomImages();
+        }
+        
+        // Import background settings
+        if (importData.backgroundImage) {
+          localStorage.setItem("backgroundImage", importData.backgroundImage);
+        }
+        if (importData.backgroundOpacity) {
+          localStorage.setItem("backgroundOpacity", importData.backgroundOpacity);
+        }
+        if (importData.backgroundIsGradient) {
+          localStorage.setItem("backgroundIsGradient", importData.backgroundIsGradient);
+        }
+        
+        // Import theme and view mode
+        if (importData.theme) {
+          localStorage.setItem("theme", importData.theme);
+        }
+        if (importData.viewMode) {
+          localStorage.setItem("viewMode", importData.viewMode);
+        }
+        
+        // Save and refresh
+        saveData();
+        location.reload(); // Reload to apply all settings
+        
+        showNotification("Data imported successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      showNotification("Failed to import data. Please check the file format.", "error");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Generate shareable URL
+function generateShareableURL() {
+  const shareData = {
+    categories: categories,
+    customImages: customImages,
+    backgroundImage: localStorage.getItem("backgroundImage"),
+    backgroundOpacity: localStorage.getItem("backgroundOpacity"),
+    backgroundIsGradient: localStorage.getItem("backgroundIsGradient"),
+    theme: localStorage.getItem("theme"),
+    viewMode: localStorage.getItem("viewMode"),
+    shareDate: new Date().toISOString(),
+    version: "1.0"
+  };
+  
+  const compressedData = btoa(JSON.stringify(shareData));
+  const shareURL = `${window.location.origin}${window.location.pathname}?share=${compressedData}`;
+  
+  return shareURL;
+}
+
+// Load data from URL
+function loadFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shareData = urlParams.get('share');
+  
+  if (shareData) {
+    try {
+      const decodedData = JSON.parse(atob(shareData));
+      
+      // Validate the data structure
+      if (!decodedData.categories || !Array.isArray(decodedData.categories)) {
+        throw new Error("Invalid share data format");
+      }
+      
+      // Ask for confirmation
+      const confirmMessage = `You're about to load shared data:\n\n` +
+        `Categories: ${decodedData.categories.length}\n` +
+        `Total Websites: ${decodedData.categories.reduce((sum, cat) => sum + cat.websites.length, 0)}\n` +
+        `Share Date: ${decodedData.shareDate ? new Date(decodedData.shareDate).toLocaleString() : 'Unknown'}\n\n` +
+        `This will replace your current data. Continue?`;
+      
+      if (confirm(confirmMessage)) {
+        // Load categories
+        categories = decodedData.categories;
+        
+        // Load custom images
+        if (decodedData.customImages) {
+          customImages = decodedData.customImages;
+          saveCustomImages();
+        }
+        
+        // Load background settings
+        if (decodedData.backgroundImage) {
+          localStorage.setItem("backgroundImage", decodedData.backgroundImage);
+        }
+        if (decodedData.backgroundOpacity) {
+          localStorage.setItem("backgroundOpacity", decodedData.backgroundOpacity);
+        }
+        if (decodedData.backgroundIsGradient) {
+          localStorage.setItem("backgroundIsGradient", decodedData.backgroundIsGradient);
+        }
+        
+        // Load theme and view mode
+        if (decodedData.theme) {
+          localStorage.setItem("theme", decodedData.theme);
+        }
+        if (decodedData.viewMode) {
+          localStorage.setItem("viewMode", decodedData.viewMode);
+        }
+        
+        // Save and refresh
+        saveData();
+        location.reload();
+        
+        showNotification("Shared data loaded successfully!", "success");
+      }
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (error) {
+      console.error("URL load error:", error);
+      showNotification("Failed to load shared data. Invalid URL format.", "error");
+    }
+  }
+}
+
+// Copy shareable URL to clipboard
+async function copyShareableURL() {
+  try {
+    const shareURL = generateShareableURL();
+    await navigator.clipboard.writeText(shareURL);
+    showNotification("Shareable URL copied to clipboard!", "success");
+  } catch (error) {
+    console.error("Copy error:", error);
+    showNotification("Failed to copy URL. Please try again.", "error");
+  }
+}
+
+// Reset to default data
+function resetToDefault() {
+  if (confirm("Are you sure you want to reset to default data? This will delete all your customizations and cannot be undone.")) {
+    // Clear all data
+    localStorage.removeItem("webHubData");
+    localStorage.removeItem("customImages");
+    localStorage.removeItem("backgroundImage");
+    localStorage.removeItem("backgroundOpacity");
+    localStorage.removeItem("backgroundIsGradient");
+    localStorage.removeItem("theme");
+    localStorage.removeItem("viewMode");
+    
+    // Reset to default categories
+    categories = [
+      {
+        id: "social-media",
+        name: "Social Media",
+        websites: [
+          { id: "social-1", name: "Twitter", url: "https://twitter.com" },
+          { id: "social-2", name: "Instagram", url: "https://instagram.com" },
+          { id: "social-3", name: "Facebook", url: "https://facebook.com" },
+          { id: "social-4", name: "LinkedIn", url: "https://linkedin.com" },
+        ],
+      },
+      {
+        id: "ai-tools",
+        name: "AI Tools",
+        websites: [
+          { id: "ai-1", name: "ChatGPT", url: "https://chat.openai.com" },
+          { id: "ai-2", name: "Claude", url: "https://claude.ai" },
+          { id: "ai-3", name: "Midjourney", url: "https://midjourney.com" },
+          { id: "ai-4", name: "Hugging Face", url: "https://huggingface.co" },
+        ],
+      },
+      {
+        id: "movies",
+        name: "Movies",
+        websites: [
+          { id: "movie-1", name: "Netflix", url: "https://netflix.com" },
+          { id: "movie-2", name: "Amazon Prime", url: "https://primevideo.com" },
+          { id: "movie-3", name: "Disney+", url: "https://disneyplus.com" },
+          { id: "movie-4", name: "HBO Max", url: "https://hbomax.com" },
+        ],
+      },
+      {
+        id: "mail",
+        name: "Mail",
+        websites: [
+          { id: "mail-1", name: "Gmail", url: "https://mail.google.com" },
+          { id: "mail-2", name: "Outlook", url: "https://outlook.com" },
+          { id: "mail-3", name: "ProtonMail", url: "https://proton.me" },
+          { id: "mail-4", name: "Yahoo Mail", url: "https://mail.yahoo.com" },
+        ],
+      },
+      {
+        id: "drive",
+        name: "Cloud Storage",
+        websites: [
+          { id: "drive-1", name: "Google Drive", url: "https://drive.google.com" },
+          { id: "drive-2", name: "Dropbox", url: "https://dropbox.com" },
+          { id: "drive-3", name: "OneDrive", url: "https://onedrive.live.com" },
+          { id: "drive-4", name: "iCloud", url: "https://icloud.com" },
+        ],
+      },
+      {
+        id: "others",
+        name: "Others",
+        websites: [
+          { id: "other-1", name: "YouTube", url: "https://youtube.com" },
+          { id: "other-2", name: "GitHub", url: "https://github.com" },
+          { id: "other-3", name: "Reddit", url: "https://reddit.com" },
+          { id: "other-4", name: "Wikipedia", url: "https://wikipedia.org" },
+        ],
+      },
+    ];
+    
+    customImages = {};
+    
+    // Save and refresh
+    saveData();
+    location.reload();
+    
+    showNotification("Reset to default data successfully!", "success");
   }
 }
