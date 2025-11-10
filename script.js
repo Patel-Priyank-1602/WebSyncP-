@@ -125,6 +125,10 @@ const exportDataBtn = document.getElementById("exportData");
 const importDataBtn = document.getElementById("importData");
 const importFile = document.getElementById("importFile");
 const resetDataBtn = document.getElementById("resetData");
+const iconShapeOptions = document.getElementById("iconShapeOptions");
+const iconShapeSection = document.getElementById("iconShapeSection");
+const iconShapeToggleBtn = document.getElementById("iconShapeToggleBtn");
+const iconShapeHeader = document.getElementById("iconShapeHeader");
 
 let draggedWebsite = null;
 let draggedCategory = null;
@@ -167,8 +171,54 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Loaded custom images:", customImages);
   }
 
+  // Load icon shape preference
+  // Migrate any legacy stored values
+  const legacy = localStorage.getItem("iconShape");
+  let migrated = legacy;
+  if (legacy === "rounded-square") migrated = "square";
+  if (legacy === "rounded-octagon") migrated = "octagon";
+  if (legacy === "nonagon") migrated = "decagon";
+  const savedIconShape = migrated || "default";
+  applyIconShape(savedIconShape);
+
   initializeData();
 });
+
+// Icon shape handlers
+function applyIconShape(shape) {
+  const valid = ["default", "circle", "square", "octagon", "decagon"];
+  const selected = valid.includes(shape) ? shape : "circle";
+  document.documentElement.setAttribute("data-icon-shape", selected);
+  localStorage.setItem("iconShape", selected);
+
+  if (iconShapeOptions) {
+    iconShapeOptions.querySelectorAll(".icon-shape-btn").forEach((btn) => {
+      if (btn.dataset.shape === selected) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+  }
+}
+
+if (iconShapeOptions) {
+  iconShapeOptions.addEventListener("click", (e) => {
+    const btn = e.target.closest(".icon-shape-btn");
+    if (!btn) return;
+    const shape = btn.dataset.shape;
+    applyIconShape(shape);
+  });
+}
+
+// Expand/collapse the icon outline section via small chevron button
+if (iconShapeToggleBtn && iconShapeSection) {
+  iconShapeToggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    iconShapeSection.classList.toggle("expanded");
+  });
+}
+// Keep header click safe (no toggle unless specifically clicking the chevron)
 
 // Menu Toggle Functionality
 menuToggleBtn.addEventListener("click", () => {

@@ -227,6 +227,28 @@ header {
   font-weight: 500;
 }
 
+.menu-item-header .collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: var(--transition);
+  margin-left: auto;
+}
+.menu-item-header .collapse-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+#iconShapeSection.expanded .menu-item-header .collapse-btn i {
+  transform: rotate(180deg);
+  transition: var(--transition);
+}
+
 .menu-item-header i {
   width: 20px;
   color: var(--accent);
@@ -295,6 +317,190 @@ header {
 .view-toggle-btn.active {
   background-color: var(--accent);
   color: white;
+}
+
+/* Icon Shape Switch (Menu) */
+.icon-shape-switch {
+  display: none;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+#iconShapeSection.expanded .icon-shape-switch {
+  display: flex;
+}
+
+.icon-shape-btn {
+  background-color: var(--bg-tertiary);
+  border: none;
+  color: var(--text-primary);
+  padding: 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+}
+
+.icon-shape-btn:hover {
+  background-color: var(--accent);
+  color: white;
+}
+
+.icon-shape-btn.active {
+  background-color: var(--accent);
+  color: white;
+}
+
+.shape-preview {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.shape-preview.default { background: transparent; border-style: dashed; border-color: rgba(255,255,255,0.35); }
+.shape-preview.circle { border-radius: 50%; }
+.shape-preview.square { border-radius: 6px; }
+.shape-preview.octagon { /* rounded-visual octagon preview */
+  clip-path: polygon(
+    18% 0%,
+    82% 0%,
+    92% 8%,
+    100% 18%,
+    100% 82%,
+    92% 92%,
+    82% 100%,
+    18% 100%,
+    8% 92%,
+    0% 82%,
+    0% 18%,
+    8% 8%
+  );
+}
+.shape-preview.decagon {
+  /* approximate 10-sided shape with softer corners */
+  clip-path: polygon(
+    50% 0%,
+    78% 6%,
+    96% 26%,
+    100% 50%,
+    96% 74%,
+    78% 94%,
+    50% 100%,
+    22% 94%,
+    4% 74%,
+    0% 50%,
+    4% 26%,
+    22% 6%
+  );
+}
+
+/* Icon outline shapes (applied to both views) */
+[data-icon-shape="default"] .grid-item-icon,
+[data-icon-shape="default"] .website-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border-radius: 0 !important;
+  clip-path: none !important;
+}
+[data-icon-shape="default"] .grid-item-icon::before,
+[data-icon-shape="default"] .website-icon::before { display: none !important; }
+[data-icon-shape="default"] .grid-item-icon img,
+[data-icon-shape="default"] .website-icon img { border-radius: 0 !important; }
+
+[data-icon-shape="circle"] .grid-item-icon,
+[data-icon-shape="circle"] .website-icon { 
+  border-radius: 50% !important;
+  clip-path: none !important;
+}
+[data-icon-shape="circle"] .grid-item-icon::before,
+[data-icon-shape="circle"] .website-icon::before { 
+  border-radius: 50% !important;
+}
+[data-icon-shape="circle"] .grid-item-icon img,
+[data-icon-shape="circle"] .website-icon img { 
+  border-radius: 50% !important;
+}
+
+[data-icon-shape="square"] .grid-item-icon,
+[data-icon-shape="square"] .website-icon {
+  border-radius: 16px !important;
+  clip-path: none !important;
+}
+[data-icon-shape="square"] .grid-item-icon::before,
+[data-icon-shape="square"] .website-icon::before {
+  border-radius: 16px !important;
+}
+[data-icon-shape="square"] .grid-item-icon img,
+[data-icon-shape="square"] .website-icon img {
+  border-radius: 10px !important;
+}
+
+[data-icon-shape="octagon"] .grid-item-icon,
+[data-icon-shape="octagon"] .website-icon {
+  border-radius: 0 !important;
+  /* Softer octagon look (rounded-ish corners using inner radius on content) */
+  clip-path: polygon(
+    16% 0%,
+    84% 0%,
+    94% 6%,
+    100% 16%,
+    100% 84%,
+    94% 94%,
+    84% 100%,
+    16% 100%,
+    6% 94%,
+    0% 84%,
+    0% 16%,
+    6% 6%
+  ) !important;
+}
+[data-icon-shape="octagon"] .grid-item-icon::before,
+[data-icon-shape="octagon"] .website-icon::before {
+  border-radius: 0 !important;
+  clip-path: inherit !important;
+}
+[data-icon-shape="octagon"] .grid-item-icon img,
+[data-icon-shape="octagon"] .website-icon img {
+  /* Round inner content slightly to visually soften corners */
+  border-radius: 14px !important;
+}
+
+[data-icon-shape="decagon"] .grid-item-icon,
+[data-icon-shape="decagon"] .website-icon {
+  clip-path: polygon(
+    50% 0%,
+    80% 6%,
+    96% 24%,
+    100% 50%,
+    96% 76%,
+    80% 94%,
+    50% 100%,
+    20% 94%,
+    4% 76%,
+    0% 50%,
+    4% 24%,
+    20% 6%
+  ) !important;
+  border-radius: 0 !important;
+}
+[data-icon-shape="decagon"] .grid-item-icon::before,
+[data-icon-shape="decagon"] .website-icon::before {
+  clip-path: inherit !important;
+}
+[data-icon-shape="decagon"] .grid-item-icon img,
+[data-icon-shape="decagon"] .website-icon img {
+  border-radius: 12px !important;
 }
 
 /* Menu Action Buttons */
