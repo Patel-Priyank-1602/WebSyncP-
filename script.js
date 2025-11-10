@@ -242,9 +242,21 @@ function renderGridView() {
   const categoriesRow = document.createElement("div");
   categoriesRow.className = "categories-row";
 
-  // Render each category side by side
-  categories.forEach((category, categoryIndex) => {
-    if (category.websites.length === 0) return; // Skip empty categories
+  // Filter out empty categories
+  const validCategories = categories.filter(category => category.websites.length > 0);
+
+  // Create 4 column containers for masonry layout
+  const columns = [];
+  for (let i = 0; i < 4; i++) {
+    const column = document.createElement("div");
+    column.className = "category-column";
+    columns.push(column);
+    categoriesRow.appendChild(column);
+  }
+
+  // Distribute categories across columns (round-robin for even distribution)
+  validCategories.forEach((category, categoryIndex) => {
+    const columnIndex = categoryIndex % 4;
 
     // Create category section
     const categorySection = document.createElement("div");
@@ -468,7 +480,7 @@ function renderGridView() {
     });
 
     categorySection.appendChild(categoryContainer);
-    categoriesRow.appendChild(categorySection);
+    columns[columnIndex].appendChild(categorySection);
   });
 
   gridView.appendChild(categoriesRow);

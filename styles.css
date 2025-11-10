@@ -335,12 +335,20 @@ header {
   margin: 0 auto;
 }
 
-/* Categories Row - 4 categories side by side */
+/* Categories Row - 4 categories side by side - Masonry layout using columns */
 .categories-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
+  gap: 30px; /* Consistent spacing between columns */
   margin-bottom: 40px;
+  align-items: start; /* Each section only takes the height it needs */
+}
+
+/* Category Column - Each column flows vertically */
+.category-column {
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Consistent spacing between stacked sections */
 }
 
 /* Grid Category Section */
@@ -349,16 +357,17 @@ header {
   flex-direction: column;
   background: rgba(var(--bg-secondary-rgb), 0.3);
   border-radius: 20px;
-  padding: 20px;
+  padding: 25px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   animation: slideUp 0.5s ease forwards;
+  height: fit-content; /* Only take height needed for content */
 }
 
 /* Grid Category Headers */
 .grid-category-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .grid-category-title {
@@ -383,7 +392,7 @@ header {
 .grid-category-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 10px;
   justify-items: center;
 }
 
@@ -394,7 +403,7 @@ header {
   text-align: center;
   cursor: pointer;
   transition: var(--transition);
-  padding: 12px;
+  padding: 8px;
   border-radius: 15px;
   user-select: none;
   position: relative;
