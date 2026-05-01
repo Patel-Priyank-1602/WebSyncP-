@@ -113,6 +113,17 @@
                     Share Setup
                 </button>
             </div>
+
+            <div class="menu-item">
+                <div class="menu-item-header">
+                    <i class="fas fa-sticky-note"></i>
+                    <span>Notes</span>
+                </div>
+                <button id="notesToggleBtn" class="menu-action-btn">
+                    <i class="fas fa-book-open"></i>
+                    Open Notes
+                </button>
+            </div>
             
             <!-- Custom Website Images option removed from here -->
         </div>
@@ -390,6 +401,60 @@
             </div>
         </div>
     </div>
+
+    <!-- Notes Modal -->
+    <div class="modal" id="notesModal">
+        <div class="modal-content notes-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">My Notes</h3>
+                <button class="modal-close" id="closeNotesModal">×</button>
+            </div>
+            <div class="notes-container">
+                <!-- Notes Search -->
+                <div class="notes-search" id="notesSearchContainer">
+                    <input type="text" id="notesSearchInput" placeholder="Search notes by title...">
+                    <i class="fas fa-search"></i>
+                </div>
+
+                <!-- Add Note Form (hidden by default) -->
+                <div class="notes-add-form" id="notesAddForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="noteTitle">Title</label>
+                        <input type="text" id="noteTitle" placeholder="Enter note title..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="noteSection">Section (e.g., Study, Finance)</label>
+                        <input type="text" id="noteSection" placeholder="Add a section name..." list="noteSectionsList">
+                        <datalist id="noteSectionsList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="noteDescription">Description</label>
+                        <textarea id="noteDescription" placeholder="Write your note here..." rows="5"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAddNote">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveNote">
+                            <i class="fas fa-save"></i> Save Note
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notes List -->
+                <div class="notes-list" id="notesList">
+                    <div class="notes-empty" id="notesEmpty">
+                        <i class="fas fa-sticky-note"></i>
+                        <p>No notes yet. Click the button below to add one!</p>
+                    </div>
+                </div>
+
+                <!-- Add Note Button -->
+                <button type="button" class="btn btn-primary notes-add-btn" id="addNoteBtn">
+                    <i class="fas fa-plus"></i> Add New Note
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <p>&copy; 2025 WebSync. All Rights Reserved.</p>
         <a href="https://patel-priyank-1602.github.io/contactcvr/" class="btn btn-secondary">Contact Us</a>

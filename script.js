@@ -2206,3 +2206,346 @@ function resetToDefault() {
     showNotification("Reset to default data successfully!", "success");
   }
 }
+
+// ================================
+// Notes Feature
+// ================================
+
+const notesToggleBtn = document.getElementById("notesToggleBtn");
+const notesModal = document.getElementById("notesModal");
+const closeNotesModal = document.getElementById("closeNotesModal");
+const notesAddForm = document.getElementById("notesAddForm");
+const notesList = document.getElementById("notesList");
+const notesEmpty = document.getElementById("notesEmpty");
+const addNoteBtn = document.getElementById("addNoteBtn");
+const cancelAddNote = document.getElementById("cancelAddNote");
+const saveNoteBtn = document.getElementById("saveNote");
+const noteTitleInput = document.getElementById("noteTitle");
+const noteSectionInput = document.getElementById("noteSection");
+const noteDescriptionInput = document.getElementById("noteDescription");
+const notesSearchInput = document.getElementById("notesSearchInput");
+const noteSectionsList = document.getElementById("noteSectionsList");
+
+let notes = [];
+let editingNoteId = null;
+
+// Load notes from localStorage
+function loadNotes() {
+  const storedNotes = localStorage.getItem("webSyncNotes");
+  if (storedNotes) {
+    notes = JSON.parse(storedNotes);
+  }
+  updateSectionsDatalist();
+}
+
+// Update datalist with unique sections
+function updateSectionsDatalist() {
+  if (!noteSectionsList) return;
+  const sections = new Set(notes.map(n => n.section).filter(Boolean));
+  noteSectionsList.innerHTML = Array.from(sections)
+    .map(section => `<option value="${escapeHtml(section)}"></option>`)
+    .join('');
+}
+
+// Save notes to localStorage
+function saveNotes() {
+  try {
+    localStorage.setItem("webSyncNotes", JSON.stringify(notes));
+  } catch (error) {
+    showNotification("Failed to save notes", "error");
+    console.error("Save notes error:", error);
+  }
+}
+
+// Format date for display
+function formatNoteDate(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+  
+  // Less than 1 minute
+  if (diff < 60000) return "Just now";
+  // Less than 1 hour
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  // Less than 24 hours
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  // Less than 7 days
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  
+  // Otherwise show date
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+// Render notes list
+function renderNotes() {
+  // Clear existing notes and section headers (but keep the empty state element)
+  const existingElements = notesList.querySelectorAll(".note-card, .notes-section-header");
+  existingElements.forEach(el => el.remove());
+
+  const searchQuery = notesSearchInput.value.toLowerCase().trim();
+
+  // Filter notes by title or section (search)
+  const filteredNotes = notes.filter(note => {
+    const titleMatch = note.title.toLowerCase().includes(searchQuery);
+    const sectionMatch = note.section && note.section.toLowerCase().includes(searchQuery);
+    return titleMatch || sectionMatch;
+  });
+
+  if (filteredNotes.length === 0) {
+    if (notes.length === 0) {
+      notesEmpty.querySelector('p').textContent = "No notes yet. Click the button below to add one!";
+    } else {
+      notesEmpty.querySelector('p').textContent = "No notes match your search.";
+    }
+    notesEmpty.style.display = "block";
+    return;
+  }
+
+  notesEmpty.style.display = "none";
+
+  // Group filtered notes by section
+  const groupedNotes = {};
+  filteredNotes.forEach(note => {
+    const sectionName = note.section ? note.section.trim() : "Uncategorized";
+    if (!groupedNotes[sectionName]) {
+      groupedNotes[sectionName] = [];
+    }
+    groupedNotes[sectionName].push(note);
+  });
+
+  // Sort groups alphabetically, but put "Uncategorized" at the end
+  const sortedSections = Object.keys(groupedNotes).sort((a, b) => {
+    if (a === "Uncategorized") return 1;
+    if (b === "Uncategorized") return -1;
+    return a.localeCompare(b);
+  });
+
+  let globalIndex = 0; // For animation delay
+
+  sortedSections.forEach(section => {
+    // Render section header
+    const sectionHeader = document.createElement("div");
+    sectionHeader.className = "notes-section-header";
+    sectionHeader.innerHTML = `<h4>${escapeHtml(section)}</h4>`;
+    notesList.appendChild(sectionHeader);
+
+    // Sort notes within section by date (newest first)
+    const sortedNotes = [...groupedNotes[section]].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    sortedNotes.forEach((note) => {
+      const card = document.createElement("div");
+      card.className = "note-card";
+      card.dataset.noteId = note.id;
+      card.style.animationDelay = `${globalIndex * 0.06}s`;
+      globalIndex++;
+
+      card.innerHTML = `
+        <div class="note-header">
+          <div class="note-title-section">
+            <div class="note-icon">
+              <i class="fas fa-sticky-note"></i>
+            </div>
+            <span class="note-title">${escapeHtml(note.title)}</span>
+            ${note.section ? `<span class="note-section-badge">${escapeHtml(note.section)}</span>` : ''}
+          </div>
+          <span class="note-meta">${formatNoteDate(note.updatedAt)}</span>
+          <div class="note-chevron">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="note-body">
+          <div class="note-description">${escapeHtml(note.description) || '<em style="opacity:0.5;">No description</em>'}</div>
+          <div class="note-actions">
+            <button class="note-action-btn edit" data-note-id="${note.id}" title="Edit Note">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="note-action-btn delete" data-note-id="${note.id}" title="Delete Note">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Toggle expand/collapse on header click
+      const header = card.querySelector(".note-header");
+      header.addEventListener("click", () => {
+        // Close other expanded cards
+        notesList.querySelectorAll(".note-card.expanded").forEach(c => {
+          if (c !== card) c.classList.remove("expanded");
+        });
+        card.classList.toggle("expanded");
+      });
+
+      // Edit button
+      const editBtn = card.querySelector(".note-action-btn.edit");
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        startEditNote(note.id);
+      });
+
+      // Delete button
+      const deleteBtn = card.querySelector(".note-action-btn.delete");
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteNote(note.id);
+      });
+
+      notesList.appendChild(card);
+    });
+  });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Open Notes modal
+function openNotesModal() {
+  notesSearchInput.value = "";
+  loadNotes();
+  renderNotes();
+  resetNoteForm();
+  notesModal.classList.add("active");
+  closeRightMenu();
+}
+
+// Close Notes modal
+function closeNotesModalFn() {
+  notesModal.classList.remove("active");
+  resetNoteForm();
+}
+
+// Show add note form
+function showAddNoteForm() {
+  editingNoteId = null;
+  noteTitleInput.value = "";
+  noteSectionInput.value = "";
+  noteDescriptionInput.value = "";
+  notesAddForm.style.display = "block";
+  notesAddForm.classList.remove("editing");
+  addNoteBtn.style.display = "none";
+  noteTitleInput.focus();
+}
+
+// Reset note form
+function resetNoteForm() {
+  editingNoteId = null;
+  noteTitleInput.value = "";
+  noteSectionInput.value = "";
+  noteDescriptionInput.value = "";
+  notesAddForm.style.display = "none";
+  notesAddForm.classList.remove("editing");
+  addNoteBtn.style.display = "flex";
+}
+
+// Save note (create or update)
+function saveNote() {
+  const title = noteTitleInput.value.trim();
+  const section = noteSectionInput.value.trim();
+  const description = noteDescriptionInput.value.trim();
+
+  if (!title) {
+    showNotification("Please enter a note title", "error");
+    noteTitleInput.focus();
+    return;
+  }
+
+  if (editingNoteId) {
+    // Update existing note
+    const noteIndex = notes.findIndex(n => n.id === editingNoteId);
+    if (noteIndex !== -1) {
+      notes[noteIndex].title = title;
+      notes[noteIndex].section = section;
+      notes[noteIndex].description = description;
+      notes[noteIndex].updatedAt = Date.now();
+      showNotification("Note updated successfully!", "success");
+    }
+  } else {
+    // Create new note
+    const newNote = {
+      id: "note-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
+      title: title,
+      section: section,
+      description: description,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    notes.push(newNote);
+    showNotification("Note added successfully!", "success");
+  }
+
+  updateSectionsDatalist();
+  saveNotes();
+  renderNotes();
+  resetNoteForm();
+}
+
+// Start editing a note
+function startEditNote(noteId) {
+  const note = notes.find(n => n.id === noteId);
+  if (!note) return;
+
+  editingNoteId = noteId;
+  noteTitleInput.value = note.title;
+  noteSectionInput.value = note.section || "";
+  noteDescriptionInput.value = note.description;
+  notesAddForm.style.display = "block";
+  notesAddForm.classList.add("editing");
+  addNoteBtn.style.display = "none";
+  noteTitleInput.focus();
+
+  // Scroll form into view
+  notesAddForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Delete a note
+function deleteNote(noteId) {
+  if (confirm("Are you sure you want to delete this note?")) {
+    notes = notes.filter(n => n.id !== noteId);
+    updateSectionsDatalist();
+    saveNotes();
+    renderNotes();
+    showNotification("Note deleted", "success");
+  }
+}
+
+// Event Listeners for Notes
+notesToggleBtn.addEventListener("click", openNotesModal);
+closeNotesModal.addEventListener("click", closeNotesModalFn);
+addNoteBtn.addEventListener("click", showAddNoteForm);
+cancelAddNote.addEventListener("click", resetNoteForm);
+saveNoteBtn.addEventListener("click", saveNote);
+notesSearchInput.addEventListener("input", renderNotes);
+
+// Close notes modal on outside click
+notesModal.addEventListener("click", (e) => {
+  if (e.target === notesModal) {
+    closeNotesModalFn();
+  }
+});
+
+// Keyboard support for note form
+noteTitleInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    noteDescriptionInput.focus();
+  }
+});
+
+noteDescriptionInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.ctrlKey) {
+    e.preventDefault();
+    saveNote();
+  }
+});
+
+// Load notes on page load
+loadNotes();
