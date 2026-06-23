@@ -2223,6 +2223,7 @@ const saveNoteBtn = document.getElementById("saveNote");
 const noteTitleInput = document.getElementById("noteTitle");
 const noteSectionInput = document.getElementById("noteSection");
 const noteDescriptionInput = document.getElementById("noteDescription");
+const noteShapeInput = document.getElementById("noteShape");
 const notesSearchInput = document.getElementById("notesSearchInput");
 const noteSectionsList = document.getElementById("noteSectionsList");
 
@@ -2338,8 +2339,21 @@ function renderNotes() {
 
     sortedNotes.forEach((note) => {
       const card = document.createElement("div");
-      card.className = "note-card";
+      const shapeClass = note.shape ? `shape-${note.shape}` : "shape-rectangle";
+      card.className = `note-card ${shapeClass}`;
       card.dataset.noteId = note.id;
+      
+      // Absolute positioning
+      card.style.position = 'absolute';
+      if (note.x !== undefined && note.y !== undefined) {
+        card.style.left = `${note.x}px`;
+        card.style.top = `${note.y}px`;
+      } else {
+        // Default scattered positioning
+        card.style.left = `${(globalIndex % 3) * 320 + 20}px`;
+        card.style.top = `${Math.floor(globalIndex / 3) * 200 + 50}px`;
+      }
+      
       card.style.animationDelay = `${globalIndex * 0.06}s`;
       globalIndex++;
 
@@ -2353,9 +2367,6 @@ function renderNotes() {
             ${note.section ? `<span class="note-section-badge">${escapeHtml(note.section)}</span>` : ''}
           </div>
           <span class="note-meta">${formatNoteDate(note.updatedAt)}</span>
-          <div class="note-chevron">
-            <i class="fas fa-chevron-down"></i>
-          </div>
         </div>
         <div class="note-body">
           <div class="note-description">${escapeHtml(note.description) || '<em style="opacity:0.5;">No description</em>'}</div>
@@ -2370,14 +2381,46 @@ function renderNotes() {
         </div>
       `;
 
-      // Toggle expand/collapse on header click
+      // Dragging logic
       const header = card.querySelector(".note-header");
-      header.addEventListener("click", () => {
-        // Close other expanded cards
-        notesList.querySelectorAll(".note-card.expanded").forEach(c => {
-          if (c !== card) c.classList.remove("expanded");
-        });
-        card.classList.toggle("expanded");
+      header.style.cursor = "move";
+      
+      header.addEventListener("mousedown", (e) => {
+        if (e.target.closest("button") || e.target.tagName.toLowerCase() === "input") return;
+        
+        let startX = e.clientX;
+        let startY = e.clientY;
+        let cardX = parseInt(card.style.left || 0, 10);
+        let cardY = parseInt(card.style.top || 0, 10);
+        
+        // Bring to front
+        document.querySelectorAll(".note-card").forEach(c => c.style.zIndex = "1");
+        card.style.zIndex = "100";
+        
+        const mouseMoveHandler = (eMove) => {
+          const dx = eMove.clientX - startX;
+          const dy = eMove.clientY - startY;
+          card.style.left = `${cardX + dx}px`;
+          card.style.top = `${cardY + dy}px`;
+        };
+        
+        const mouseUpHandler = (eUp) => {
+          document.removeEventListener("mousemove", mouseMoveHandler);
+          document.removeEventListener("mouseup", mouseUpHandler);
+          
+          // Save new position
+          const dx = eUp.clientX - startX;
+          const dy = eUp.clientY - startY;
+          const noteIndex = notes.findIndex(n => n.id === note.id);
+          if (noteIndex !== -1) {
+            notes[noteIndex].x = cardX + dx;
+            notes[noteIndex].y = cardY + dy;
+            saveNotes();
+          }
+        };
+        
+        document.addEventListener("mousemove", mouseMoveHandler);
+        document.addEventListener("mouseup", mouseUpHandler);
       });
 
       // Edit button
@@ -2428,6 +2471,7 @@ function showAddNoteForm() {
   editingNoteId = null;
   noteTitleInput.value = "";
   noteSectionInput.value = "";
+  noteShapeInput.value = "rectangle";
   noteDescriptionInput.value = "";
   notesAddForm.style.display = "block";
   notesAddForm.classList.remove("editing");
@@ -2440,6 +2484,7 @@ function resetNoteForm() {
   editingNoteId = null;
   noteTitleInput.value = "";
   noteSectionInput.value = "";
+  noteShapeInput.value = "rectangle";
   noteDescriptionInput.value = "";
   notesAddForm.style.display = "none";
   notesAddForm.classList.remove("editing");
@@ -2450,6 +2495,7 @@ function resetNoteForm() {
 function saveNote() {
   const title = noteTitleInput.value.trim();
   const section = noteSectionInput.value.trim();
+  const shape = noteShapeInput.value;
   const description = noteDescriptionInput.value.trim();
 
   if (!title) {
@@ -2464,6 +2510,7 @@ function saveNote() {
     if (noteIndex !== -1) {
       notes[noteIndex].title = title;
       notes[noteIndex].section = section;
+      notes[noteIndex].shape = shape;
       notes[noteIndex].description = description;
       notes[noteIndex].updatedAt = Date.now();
       showNotification("Note updated successfully!", "success");
@@ -2474,6 +2521,7 @@ function saveNote() {
       id: "note-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
       title: title,
       section: section,
+      shape: shape,
       description: description,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -2496,6 +2544,7 @@ function startEditNote(noteId) {
   editingNoteId = noteId;
   noteTitleInput.value = note.title;
   noteSectionInput.value = note.section || "";
+  noteShapeInput.value = note.shape || "rectangle";
   noteDescriptionInput.value = note.description;
   notesAddForm.style.display = "block";
   notesAddForm.classList.add("editing");
